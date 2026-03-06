@@ -3,7 +3,7 @@ import { Task, Project, User } from '@/lib/store';
 import { cn, formatRelativeDate } from '@/lib/utils';
 import { format, addDays, startOfWeek, endOfWeek, eachDayOfInterval, eachWeekOfInterval, isSameDay, isWeekend, differenceInDays, isSameMonth, startOfMonth, differenceInWeeks } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { ChevronLeft, ChevronRight, ChevronDown, CornerDownRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ChevronDown, CornerDownRight, Maximize2, Minimize2 } from 'lucide-react';
 import { StatusSelector } from './ui-elements';
 import { DateSelector } from './DateSelector';
 
@@ -28,6 +28,7 @@ export function GanttChart({ tasks, projects, onTaskClick, onUpdateTask, users }
   } | null>(null);
   const [expandedTasks, setExpandedTasks] = useState<Record<string, boolean>>({});
   const [collapsedProjects, setCollapsedProjects] = useState<Record<string, boolean>>({});
+  const [isFullHeight, setIsFullHeight] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Calculate visible range
@@ -145,9 +146,9 @@ export function GanttChart({ tasks, projects, onTaskClick, onUpdateTask, users }
     if (!container) return;
 
     const handleWheel = (e: WheelEvent) => {
-      if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+      if (e.shiftKey) {
         e.preventDefault();
-        container.scrollLeft += e.deltaY;
+        container.scrollLeft += e.deltaY || e.deltaX;
       }
     };
 
@@ -188,7 +189,10 @@ export function GanttChart({ tasks, projects, onTaskClick, onUpdateTask, users }
   });
 
   return (
-    <div className="flex flex-col h-full bg-[var(--background)] rounded-xl border border-[var(--border)] overflow-hidden select-none">
+    <div className={cn(
+      "flex flex-col h-full bg-[var(--background)] rounded-xl border border-[var(--border)] overflow-hidden select-none transition-all duration-300",
+      isFullHeight && "fixed inset-y-0 right-0 left-64 z-[100] bg-[var(--background)] rounded-none border-none border-l border-[var(--border)] shadow-2xl"
+    )}>
       {/* Controls */}
       <div className="flex items-center justify-between p-4 border-b border-[var(--border)] bg-[var(--muted)]/20">
         <div className="flex items-center gap-4">
@@ -230,6 +234,20 @@ export function GanttChart({ tasks, projects, onTaskClick, onUpdateTask, users }
               Semanas
             </button>
           </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setIsFullHeight(!isFullHeight)}
+            className="p-2 hover:bg-[var(--accent)] rounded-lg transition-all text-[var(--muted-foreground)] hover:text-[var(--foreground)] group"
+            title={isFullHeight ? "Sair da Tela Cheia" : "Tela Cheia"}
+          >
+            {isFullHeight ? (
+              <Minimize2 size={20} className="group-hover:scale-110 transition-transform" />
+            ) : (
+              <Maximize2 size={20} className="group-hover:scale-110 transition-transform" />
+            )}
+          </button>
         </div>
       </div>
 
@@ -620,7 +638,7 @@ function GanttBar({ title, start, end, color, visibleStart, unitWidth, viewMode,
         className="absolute right-0 top-0 bottom-0 w-6 cursor-e-resize hover:bg-white/20 rounded-r-md"
         onMouseDown={(e) => { e.stopPropagation(); onDragStart('resize-right', e); }}
       />
-      <div className="px-2 text-[13px] text-white font-bold whitespace-nowrap overflow-hidden flex items-center h-full pointer-events-none drop-shadow-sm">
+      <div className="px-2 text-[13px] text-white font-bold whitespace-nowrap overflow-hidden flex items-center h-full pointer-events-none drop-shadow-sm sticky left-80 w-fit max-w-full">
         {title}
       </div>
     </div>

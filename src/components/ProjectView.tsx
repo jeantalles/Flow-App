@@ -599,7 +599,10 @@ const SubtaskRow: React.FC<{
   };
 
   return (
-    <div className="flex items-center gap-4 text-sm group/subtask hover:bg-[var(--accent)]/50 p-2 rounded-xl transition-all -ml-2">
+    <div
+      className="flex items-center gap-4 text-sm group/subtask hover:bg-[var(--accent)]/50 p-2 rounded-xl transition-all -ml-2 cursor-pointer"
+      onClick={onClick}
+    >
       <input
         type="checkbox"
         checked={subtask.completed}
@@ -623,8 +626,7 @@ const SubtaskRow: React.FC<{
         ) : (
           <div className="flex items-center gap-2.5 w-full">
             <span
-              onClick={(e) => { e.stopPropagation(); onClick(); }}
-              className={cn("truncate cursor-pointer hover:underline font-medium", subtask.completed && "text-[var(--muted-foreground)]")}
+              className={cn("truncate font-medium", subtask.completed && "text-[var(--muted-foreground)]")}
             >
               {subtask.title}
             </span>
@@ -638,7 +640,7 @@ const SubtaskRow: React.FC<{
         )}
       </div>
 
-      <div className="flex items-center gap-4 opacity-70 group-hover/subtask:opacity-100 transition-opacity">
+      <div className="flex items-center gap-4 opacity-70 group-hover/subtask:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
         <DateSelector
           date={subtask.endDate}
           onSelect={(date) => onUpdate({ ...subtask, endDate: date })}

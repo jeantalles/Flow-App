@@ -52,8 +52,22 @@ export function MyTasksView({
   const [inlineCreating, setInlineCreating] = useState<Task['status'] | null>(null);
   const [inlineTitle, setInlineTitle] = useState('');
   const [localTodayTasks, setLocalTodayTasks] = useState<any[]>([]);
-  const [showOtherTasks, setShowOtherTasks] = useState(true);
-  const [groupByProject, setGroupByProject] = useState(true);
+  const [showOtherTasks, setShowOtherTasks] = useState(() => {
+    const saved = localStorage.getItem('studioflow_show_other_tasks');
+    return saved !== null ? JSON.parse(saved) : true;
+  });
+  const [groupByProject, setGroupByProject] = useState(() => {
+    const saved = localStorage.getItem('studioflow_group_by_project');
+    return saved !== null ? JSON.parse(saved) : true;
+  });
+
+  useEffect(() => {
+    localStorage.setItem('studioflow_show_other_tasks', JSON.stringify(showOtherTasks));
+  }, [showOtherTasks]);
+
+  useEffect(() => {
+    localStorage.setItem('studioflow_group_by_project', JSON.stringify(groupByProject));
+  }, [groupByProject]);
 
   // Today's tasks calculation
   const today = new Date().toISOString().split('T')[0];

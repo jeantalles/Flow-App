@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Task, User, Subtask, ActiveTimer, Project } from '@/lib/store';
-import { Button, StatusSelector, AssigneeSelector } from './ui-elements';
+import { Button, StatusSelector, AssigneeSelector, ProjectSelector } from './ui-elements';
 import {
   X,
   Calendar,
@@ -117,8 +117,8 @@ export function TaskModal({
     }
   };
 
-  const handleCloseWithCheck = () => {
-    if (editingSubtask) {
+  const handleCloseWithCheck = (forceCloseAll = false) => {
+    if (editingSubtask && !forceCloseAll) {
       setEditingSubtask(null);
       return;
     }
@@ -145,8 +145,8 @@ export function TaskModal({
 
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isOpen && !editingSubtask) {
-        handleCloseWithCheck();
+      if (e.key === 'Escape' && isOpen) {
+        handleCloseWithCheck(true);
       }
     };
     window.addEventListener('keydown', handleEsc);
@@ -199,9 +199,10 @@ export function TaskModal({
   };
 
   const handleUpdateSubtask = (updatedSubtask: Subtask) => {
+    const newSubtasks = editedTask.subtasks.map(st => st.id === updatedSubtask.id ? updatedSubtask : st);
     setEditedTask({
       ...editedTask,
-      subtasks: editedTask.subtasks.map(st => st.id === updatedSubtask.id ? updatedSubtask : st)
+      subtasks: newSubtasks
     });
     setEditingSubtask(updatedSubtask);
   };
@@ -240,7 +241,7 @@ export function TaskModal({
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
       onClick={(e) => {
         if (e.target === e.currentTarget) {
-          handleCloseWithCheck();
+          handleCloseWithCheck(true);
         }
       }}
     >
@@ -312,7 +313,7 @@ export function TaskModal({
                     </Button>
                   )}
                 </div>
-                <button onClick={handleCloseWithCheck} className="text-[var(--muted-foreground)] hover:text-[var(--foreground)] p-2">
+                <button onClick={() => handleCloseWithCheck()} className="text-[var(--muted-foreground)] hover:text-[var(--foreground)] p-2">
                   <X size={20} />
                 </button>
               </div>
@@ -330,18 +331,12 @@ export function TaskModal({
                         className="w-full text-3xl font-bold bg-transparent border-none focus:ring-0 placeholder-[var(--muted-foreground)] p-0"
                         placeholder="Título da tarefa"
                       />
-                      <div className="flex items-center gap-2 text-[var(--muted-foreground)]">
-                        <Folder size={16} />
-                        <select
-                          value={editedTask.projectId || ''}
-                          onChange={(e) => setEditedTask({ ...editedTask, projectId: e.target.value || undefined })}
-                          className="bg-transparent border-none focus:ring-0 p-0 text-sm font-medium hover:text-[var(--foreground)] cursor-pointer outline-none"
-                        >
-                          <option value="">Sem Projeto</option>
-                          {projects.map(p => (
-                            <option key={p.id} value={p.id}>{p.name}</option>
-                          ))}
-                        </select>
+                      <div className="flex items-center gap-2">
+                        <ProjectSelector
+                          projectId={editedTask.projectId}
+                          projects={projects}
+                          onSelect={(projectId) => setEditedTask({ ...editedTask, projectId })}
+                        />
                       </div>
                     </div>
                     <div>
@@ -469,7 +464,7 @@ export function TaskModal({
                   <Trash2 size={18} />
                 </button>
                 <div className="flex gap-3">
-                  <Button variant="secondary" onClick={handleCloseWithCheck}>Cancelar</Button>
+                  <Button variant="secondary" onClick={() => handleCloseWithCheck()}>Cancelar</Button>
                   <Button onClick={handleSave} className="gap-2 bg-[#165DFC] hover:bg-[#165DFC]/90 border-none">
                     <Save size={16} /> {isNew ? 'Criar Tarefa' : 'Salvar'}
                   </Button>
@@ -521,16 +516,21 @@ const SubtaskItem: React.FC<SubtaskItemProps> = ({
   };
 
   return (
-    <div className="flex items-center gap-3 group p-3 hover:bg-[var(--muted)]/30 rounded-lg transition-colors border border-[var(--border)] bg-[var(--background)]">
-      <div className="text-[var(--muted-foreground)] cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity">
+    <div
+      className="flex items-center gap-3 group p-3 hover:bg-[var(--muted)]/30 rounded-lg transition-colors border border-[var(--border)] bg-[var(--background)] cursor-pointer"
+      onClick={onEdit}
+    >
+      <div className="text-[var(--muted-foreground)] cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
         <GripVertical size={16} />
       </div>
-      <input
-        type="checkbox"
-        checked={subtask.completed}
-        onChange={(e) => { e.stopPropagation(); onToggle(); }}
-        className="w-5 h-5 rounded border-[var(--muted-foreground)] text-[var(--primary)] focus:ring-[var(--primary)]"
-      />
+      <div onClick={(e) => e.stopPropagation()}>
+        <input
+          type="checkbox"
+          checked={subtask.completed}
+          onChange={(e) => { onToggle(); }}
+          className="w-5 h-5 rounded border-[var(--muted-foreground)] text-[var(--primary)] focus:ring-[var(--primary)] cursor-pointer"
+        />
+      </div>
       <div className="flex-1 min-w-0 flex items-center gap-2">
         {isRenaming ? (
           <input
@@ -552,8 +552,7 @@ const SubtaskItem: React.FC<SubtaskItemProps> = ({
         ) : (
           <>
             <span
-              className={cn("block text-sm truncate cursor-pointer", subtask.completed && "text-[var(--muted-foreground)]")}
-              onClick={onEdit}
+              className={cn("block text-sm truncate", subtask.completed && "text-[var(--muted-foreground)]")}
             >
               {subtask.title}
             </span>
@@ -567,21 +566,23 @@ const SubtaskItem: React.FC<SubtaskItemProps> = ({
           </>
         )}
       </div>
-      <DateSelector
-        date={subtask.endDate}
-        onSelect={(date) => onUpdate({ endDate: date })}
-      />
-      <AssigneeSelector
-        assigneeId={subtask.assigneeId}
-        users={users}
-        onSelect={(userId) => onUpdate({ assigneeId: userId })}
-      />
-      <button
-        onClick={(e) => { e.stopPropagation(); onDelete(); }}
-        className="opacity-0 group-hover:opacity-100 text-red-500 hover:text-red-600 transition-opacity p-1"
-      >
-        <Trash2 size={16} />
-      </button>
+      <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+        <DateSelector
+          date={subtask.endDate}
+          onSelect={(date) => onUpdate({ endDate: date })}
+        />
+        <AssigneeSelector
+          assigneeId={subtask.assigneeId}
+          users={users}
+          onSelect={(userId) => onUpdate({ assigneeId: userId })}
+        />
+        <button
+          onClick={(e) => { e.stopPropagation(); onDelete(); }}
+          className="opacity-0 group-hover:opacity-100 text-red-500 hover:text-red-600 transition-opacity p-1"
+        >
+          <Trash2 size={16} />
+        </button>
+      </div>
     </div>
   );
 };
@@ -643,8 +644,11 @@ function SubtaskView({
     return () => clearInterval(interval);
   }, [isTimerRunning, isTimerPaused, activeTimer]);
 
-  const handleBack = () => {
+  useEffect(() => {
     onUpdate(editedSubtask);
+  }, [editedSubtask]);
+
+  const handleBack = () => {
     onBack();
   };
 
@@ -681,9 +685,10 @@ function SubtaskView({
         <div className="flex items-center gap-4">
           <button
             onClick={handleBack}
-            className="p-2 -ml-2 hover:bg-[var(--muted)] rounded-full transition-colors text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
+            className="flex items-center gap-2 px-3 py-1.5 -ml-2 hover:bg-[var(--muted)] rounded-lg transition-colors text-[var(--muted-foreground)] hover:text-[var(--foreground)] group/back"
           >
-            <ArrowLeft size={20} />
+            <ArrowLeft size={18} className="group-hover/back:-translate-x-0.5 transition-transform" />
+            <span className="text-sm font-medium">Tarefa: {parentTaskTitle}</span>
           </button>
           <div className={cn(
             "flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase",
@@ -735,7 +740,6 @@ function SubtaskView({
             <div className="lg:col-span-2 space-y-6">
               <div className="space-y-4">
                 <div className="flex flex-col gap-1">
-                  <span className="text-sm text-[var(--muted-foreground)] font-medium">Tarefa: {parentTaskTitle}</span>
                   <input
                     type="text"
                     value={editedSubtask.title}
@@ -744,6 +748,15 @@ function SubtaskView({
                     placeholder="Título da subtarefa"
                   />
                 </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-[var(--muted-foreground)] mb-2">Descrição</label>
+                <textarea
+                  value={editedSubtask.description || ''}
+                  onChange={(e) => setEditedSubtask({ ...editedSubtask, description: e.target.value })}
+                  className="w-full min-h-[150px] p-4 rounded-xl bg-[var(--muted)]/30 border border-[var(--border)] focus:ring-2 focus:ring-[var(--primary)] outline-none resize-y text-base"
+                  placeholder="Adicione uma descrição para esta subtarefa..."
+                />
               </div>
             </div>
 

@@ -72,6 +72,9 @@ export default function App() {
   useEffect(() => {
     if (!session?.user) return;
 
+    // Se já temos o usuário correto e já carregamos dados, evitamos refetch agressivo
+    if (currentUser?.id === session.user.id && projects.length > 0) return;
+
     const loadData = async () => {
       try {
         const [fetchedProjects, fetchedTasks, fetchedUsers] = await Promise.all([
@@ -79,6 +82,8 @@ export default function App() {
           api.tasks.fetchAll(),
           api.users.fetchAll(),
         ]);
+
+        // Só atualizamos o estado se houver mudança ou se estivermos vazios (evitando flashes)
         setProjects(fetchedProjects);
         setTasks(fetchedTasks);
 
@@ -125,7 +130,7 @@ export default function App() {
       }
     };
     loadData();
-  }, [session]);
+  }, [session, currentUser?.id]);
 
   // Save data on changes
   useEffect(() => {
@@ -156,11 +161,11 @@ export default function App() {
       if (projectToEdit) {
         // Edit existing
         const updated = await api.projects.update(projectToEdit.id, projectData);
-        setProjects(projects.map(p => p.id === updated.id ? updated : p));
+        setProjects(prev => prev.map(p => p.id === updated.id ? updated : p));
       } else {
         // Create new
         const newProject = await api.projects.create(projectData as Omit<Project, 'id' | 'createdAt'>);
-        setProjects([...projects, newProject]);
+        setProjects(prev => [...prev, newProject]);
         setActiveProjectId(newProject.id);
         setCurrentView('project');
       }
@@ -345,7 +350,7 @@ export default function App() {
     // Find previous task to detect subtask changes
     const prevTask = tasks.find(t => t.id === updatedTask.id);
 
-    setTasks(tasks.map(t => t.id === updatedTask.id ? updatedTask : t));
+    setTasks(prev => prev.map(t => t.id === updatedTask.id ? updatedTask : t));
     if (selectedTask?.id === updatedTask.id) {
       setSelectedTask(updatedTask);
     }
@@ -704,7 +709,10 @@ export default function App() {
             tasks={tasks}
             projects={visibleProjects}
             currentUser={currentUser}
-            onTaskClick={setSelectedTask}
+            onTaskClick={(task, subtaskId) => {
+              setSelectedTask(task);
+              setInitialSubtaskId(subtaskId || null);
+            }}
             onUpdateTask={handleUpdateTask}
             onCreateTask={handleCreateTask}
             onSaveNewTask={handleSaveNewTask}

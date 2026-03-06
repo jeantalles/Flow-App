@@ -338,3 +338,109 @@ export function StatusSelector({ status, onSelect, size = 'sm', showLabel = fals
     </div>
   );
 }
+
+// ── Project Selector ──────────────────────────────────────────────────
+
+interface ProjectSelectorProps {
+  projectId?: string;
+  projects: Project[];
+  onSelect: (projectId?: string) => void;
+  className?: string;
+  showIcon?: boolean;
+}
+
+import { Project } from '@/lib/store';
+import { Folder, ChevronDown as ChevronDownIcon } from 'lucide-react';
+
+export function ProjectSelector({ projectId, projects, onSelect, className, showIcon = true }: ProjectSelectorProps) {
+  const [showMenu, setShowMenu] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [coords, setCoords] = useState({ top: 0, left: 0, openUp: false });
+  const project = projects.find(p => p.id === projectId);
+
+  useEffect(() => {
+    if (showMenu && containerRef.current) {
+      const rect = containerRef.current.getBoundingClientRect();
+      const menuHeight = 240;
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const openUp = spaceBelow < menuHeight && rect.top > menuHeight;
+
+      setCoords({
+        top: openUp ? rect.top : rect.bottom,
+        left: rect.left,
+        openUp
+      });
+    }
+  }, [showMenu]);
+
+  return (
+    <div className={cn("relative inline-block", className)} ref={containerRef}>
+      <button
+        onClick={(e) => { e.stopPropagation(); setShowMenu(!showMenu); }}
+        className={cn(
+          "flex items-center gap-2.5 px-3 py-1.5 rounded-lg border transition-all text-xs font-bold uppercase tracking-wide shadow-sm hover:opacity-90",
+          project
+            ? "border-emerald-500/30 text-emerald-700 bg-emerald-50" // Fallback se não tiver cor
+            : "border-[var(--border)] text-[var(--muted-foreground)] bg-[var(--muted)]/20"
+        )}
+        style={project ? {
+          backgroundColor: `${project.color}15`,
+          color: project.color,
+          borderColor: `${project.color}40`
+        } : {}}
+      >
+        {project ? (
+          <>
+            <div className="w-2 h-2 rounded-full shadow-sm" style={{ backgroundColor: project.color }} />
+            {project.name}
+          </>
+        ) : (
+          <>
+            {showIcon && <Folder size={14} />}
+            Sem Projeto
+          </>
+        )}
+        <ChevronDownIcon size={12} className={cn("transition-transform duration-200", showMenu && "rotate-180")} />
+      </button>
+
+      {showMenu && createPortal(
+        <>
+          <div className="fixed inset-0 z-[9998]" onClick={(e) => { e.stopPropagation(); setShowMenu(false); }} />
+          <div
+            className={cn(
+              "fixed mt-1 w-56 bg-[var(--background)] border border-[var(--border)] rounded-xl shadow-xl z-[9999] py-1.5 max-h-60 overflow-y-auto animate-in fade-in zoom-in-95 duration-200",
+              coords.openUp ? "slide-in-from-bottom-2" : "slide-in-from-top-2"
+            )}
+            style={{
+              top: coords.openUp ? undefined : coords.top + 4,
+              bottom: coords.openUp ? (window.innerHeight - coords.top) + 4 : undefined,
+              left: Math.min(coords.left, window.innerWidth - 224 - 20)
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={(e) => { e.stopPropagation(); onSelect(undefined); setShowMenu(false); }}
+              className="w-full text-left px-4 py-2.5 hover:bg-[var(--accent)] flex items-center gap-2.5 text-xs font-semibold text-[var(--muted-foreground)] transition-colors"
+            >
+              <div className="w-2 h-2 rounded-full bg-slate-200 border border-slate-300" />
+              Sem Projeto
+            </button>
+            <div className="h-px bg-[var(--border)] my-1 mx-2" />
+            {projects.map(p => (
+              <button
+                key={p.id}
+                onClick={(e) => { e.stopPropagation(); onSelect(p.id); setShowMenu(false); }}
+                className="w-full text-left px-4 py-2.5 hover:bg-[var(--accent)] flex items-center gap-2.5 text-xs font-semibold text-[var(--foreground)] transition-colors"
+                style={projectId === p.id ? { color: p.color } : {}}
+              >
+                <div className="w-2.5 h-2.5 rounded-full shadow-sm" style={{ backgroundColor: p.color }} />
+                {p.name}
+              </button>
+            ))}
+          </div>
+        </>,
+        document.body
+      )}
+    </div>
+  );
+}

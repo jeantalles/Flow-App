@@ -85,9 +85,9 @@ export function Sidebar({
       <div className="p-6">
         <div className="flex items-center gap-3 mb-6">
           <img
-            src="/logo.jpg"
+            src="/logo.png"
             alt="Flow Logo"
-            className="w-9 h-9 rounded-xl object-cover"
+            className="w-9 h-9 rounded-xl object-contain"
             style={{ imageRendering: 'auto' }}
           />
           <span className="font-bold text-xl tracking-tight bg-gradient-to-br from-[var(--foreground)] to-[var(--muted-foreground)] bg-clip-text text-transparent">Flow</span>
