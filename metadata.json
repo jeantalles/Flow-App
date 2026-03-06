@@ -1,0 +1,5 @@
+{
+  "name": "Flow",
+  "description": "Sistema de gestão de projetos e tarefas (Flow) com visualizações em Lista, Kanban e Gantt, cronômetro e gestão de usuários.",
+  "requestFramePermissions": []
+}
