@@ -76,7 +76,8 @@ export function ProjectModal({ isOpen, onClose, onSave, projectToEdit }: Project
             type="date"
             value={deadline}
             onChange={(e) => setDeadline(e.target.value)}
-            className="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--muted)]/30 outline-none focus:ring-2 focus:ring-[var(--primary)]"
+            onClick={(e) => e.currentTarget.showPicker()}
+            className="w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--muted)]/30 outline-none focus:ring-2 focus:ring-[var(--primary)] cursor-pointer"
           />
         </div>
 
