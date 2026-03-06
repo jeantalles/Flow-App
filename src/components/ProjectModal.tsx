@@ -81,7 +81,7 @@ export function ProjectModal({ isOpen, onClose, onSave, projectToEdit }: Project
           />
         </div>
 
-        <div className="space-y-2">
+        <div className="space-y-3">
           <label className="text-sm font-medium">Cor</label>
           <div className="grid grid-cols-5 gap-3">
             {COLORS.map((c) => (
