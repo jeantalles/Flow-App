@@ -14,7 +14,8 @@ import {
   PieChart,
   Search,
   Archive,
-  CheckSquare
+  CheckSquare,
+  Calendar
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from './ui-elements';
@@ -23,7 +24,7 @@ import { Project, User } from '@/lib/store';
 interface SidebarProps {
   projects: Project[];
   activeProjectId: string | null;
-  currentView: 'project' | 'trash' | 'time-reports' | 'search' | 'my-tasks';
+  currentView: 'project' | 'trash' | 'time-reports' | 'search' | 'my-tasks' | 'weekly';
   onSelectProject: (id: string | null) => void;
   onCreateProject: () => void;
   onDuplicateProject: (id: string) => void;
@@ -38,6 +39,7 @@ interface SidebarProps {
   onEditProject: (project: Project) => void;
   onOpenSearch: () => void;
   onOpenMyTasks: () => void;
+  onOpenWeekly: () => void;
   onLogout: () => void;
 }
 
@@ -59,6 +61,7 @@ export function Sidebar({
   onEditProject,
   onOpenSearch,
   onOpenMyTasks,
+  onOpenWeekly,
   onLogout
 }: SidebarProps) {
   const [contextMenu, setContextMenu] = useState<{ x: number, y: number, projectId: string } | null>(null);
@@ -81,10 +84,10 @@ export function Sidebar({
       {/* Header */}
       <div className="p-6">
         <div className="flex items-center gap-3 mb-6">
-          <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-bold">
-            F
+          <div className="w-9 h-9 rounded-xl overflow-hidden shadow-lg shadow-indigo-500/10">
+            <img src="/logo.jpg" alt="Flow Logo" className="w-full h-full object-cover" />
           </div>
-          <span className="font-bold text-lg tracking-tight">Flow</span>
+          <span className="font-bold text-xl tracking-tight bg-gradient-to-br from-[var(--foreground)] to-[var(--muted-foreground)] bg-clip-text text-transparent">Flow</span>
         </div>
 
         <div className="space-y-1">
@@ -109,6 +112,17 @@ export function Sidebar({
           >
             <CheckSquare size={18} />
             Minhas Tarefas
+          </Button>
+          <Button
+            className={cn(
+              "w-full justify-start gap-2 h-11",
+              currentView === 'weekly' ? "bg-[#E0E7FF] text-[#4F46E5] hover:bg-[#E0E7FF]" : "text-[var(--muted-foreground)]"
+            )}
+            variant="ghost"
+            onClick={onOpenWeekly}
+          >
+            <Calendar size={18} />
+            Weekly
           </Button>
           <Button
             className={cn(

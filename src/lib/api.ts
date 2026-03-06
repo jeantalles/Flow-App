@@ -177,10 +177,9 @@ export const api = {
     },
 
     subtasks: {
-        async create(taskId: string, subtask: Omit<Subtask, 'id'>, projectId?: string) {
+        async create(taskId: string, subtask: Omit<Subtask, 'id'>) {
             const { data, error } = await supabase.from('subtasks').insert({
                 task_id: taskId,
-                project_id: projectId,
                 title: subtask.title,
                 completed: subtask.completed,
                 start_date: subtask.startDate,
@@ -225,6 +224,27 @@ export const api = {
                 end_time: log.endTime
             });
             if (error) throw error;
+        }
+    },
+    weeklyNotes: {
+        async fetchByWeek(weekStartDate: string, userId: string) {
+            const { data, error } = await supabase.from('weekly_notes')
+                .select('*')
+                .eq('week_start_date', weekStartDate)
+                .eq('user_id', userId)
+                .maybeSingle();
+            if (error) throw error;
+            return data;
+        },
+        async upsert(weekStartDate: string, userId: string, content: any) {
+            const { data, error } = await supabase.from('weekly_notes').upsert({
+                week_start_date: weekStartDate,
+                user_id: userId,
+                content,
+                updated_at: new Date().toISOString()
+            }, { onConflict: 'week_start_date,user_id' }).select().single();
+            if (error) throw error;
+            return data;
         }
     }
 };

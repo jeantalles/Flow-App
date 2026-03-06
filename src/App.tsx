@@ -12,6 +12,7 @@ import { ArchiveView } from './components/ArchiveView';
 import { TimeReportsView } from './components/TimeReportsView';
 import { SearchView } from './components/SearchView';
 import { MyTasksView } from './components/MyTasksView';
+import { WeeklyView } from './components/WeeklyView';
 import { ProjectModal } from './components/ProjectModal';
 import { GlobalTimer } from './components/GlobalTimer';
 import { dataStore, Project, Task, User, ViewMode, ThemeMode, ActiveTimer } from './lib/store';
@@ -21,7 +22,7 @@ import { api } from './lib/api';
 import { Auth } from './components/Auth';
 import { Session } from '@supabase/supabase-js';
 
-type AppView = 'project' | 'trash' | 'time-reports' | 'search' | 'my-tasks';
+type AppView = 'project' | 'trash' | 'time-reports' | 'search' | 'my-tasks' | 'weekly';
 
 export default function App() {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -211,7 +212,7 @@ export default function App() {
               description: st.description,
               isToday: st.isToday,
               timeSpent: 0
-            }, newProject.id)
+            })
           ));
           newTask.subtasks = newSubtasks;
         } else {
@@ -322,7 +323,7 @@ export default function App() {
             description: st.description,
             isToday: st.isToday,
             timeSpent: st.timeSpent || 0
-          }, newTask.projectId)
+          })
         ));
         newTask.subtasks = createdSubtasks;
       }
@@ -382,7 +383,7 @@ export default function App() {
               description: st.description,
               isToday: st.isToday,
               timeSpent: st.timeSpent || 0
-            }, updatedTask.projectId);
+            });
           } else {
             await api.subtasks.update(st.id, {
               title: st.title,
@@ -596,6 +597,7 @@ export default function App() {
         onOpenTrash={() => setCurrentView('trash')}
         onOpenSearch={() => setCurrentView('search')}
         onOpenMyTasks={() => setCurrentView('my-tasks')}
+        onOpenWeekly={() => setCurrentView('weekly')}
         onLogout={handleLogout}
         onEditProject={(project) => {
           setProjectToEdit(project);
@@ -678,6 +680,11 @@ export default function App() {
             onSaveNewTask={handleSaveNewTask}
             onDeleteTask={handleDeleteTask}
             onUpdateTasksOrder={handleUpdateTasksOrder}
+          />
+        )}
+        {currentView === 'weekly' && (
+          <WeeklyView
+            currentUser={currentUser}
           />
         )}
       </main>

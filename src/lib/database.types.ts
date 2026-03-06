@@ -265,6 +265,41 @@ export type Database = {
         }
         Relationships: []
       }
+      weekly_notes: {
+        Row: {
+          content: Json
+          created_at: string
+          id: string
+          updated_at: string
+          user_id: string
+          week_start_date: string
+        }
+        Insert: {
+          content?: Json
+          created_at?: string
+          id?: string
+          updated_at?: string
+          user_id: string
+          week_start_date: string
+        }
+        Update: {
+          content?: Json
+          created_at?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
+          week_start_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "weekly_notes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
