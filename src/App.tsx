@@ -496,10 +496,41 @@ export default function App() {
     if (!activeTimer || !activeTimer.startTime) return;
     const now = Date.now();
     const sessionElapsed = Math.floor((now - activeTimer.startTime) / 1000);
+    const startTimeStr = new Date(activeTimer.startTime).toISOString();
+    const endTimeStr = new Date(now).toISOString();
+
+    // Update task/subtask locally and in DB
+    const task = tasks.find(t => t.id === activeTimer.taskId);
+    if (task) {
+      if (activeTimer.subtaskId) {
+        const updatedSubtasks = task.subtasks.map(s =>
+          s.id === activeTimer.subtaskId
+            ? { ...s, timeSpent: (s.timeSpent || 0) + sessionElapsed }
+            : s
+        );
+        handleUpdateTask({ ...task, subtasks: updatedSubtasks });
+      } else {
+        handleUpdateTask({ ...task, timeSpent: task.timeSpent + sessionElapsed });
+      }
+
+      // Log this segment to DB
+      if (currentUser?.id) {
+        api.timeLogs.create({
+          userId: currentUser.id,
+          taskId: activeTimer.taskId,
+          projectId: task.projectId,
+          subtaskId: activeTimer.subtaskId,
+          durationSeconds: sessionElapsed,
+          startTime: startTimeStr,
+          endTime: endTimeStr
+        }).catch(console.error);
+      }
+    }
+
     setActiveTimer({
       ...activeTimer,
       startTime: null,
-      accumulatedTime: activeTimer.accumulatedTime + sessionElapsed
+      accumulatedTime: 0 // Reset since we already saved this time to the task record
     });
   };
 
@@ -514,40 +545,39 @@ export default function App() {
   const handleStopTimer = () => {
     if (!activeTimer) return;
 
-    let totalElapsed = activeTimer.accumulatedTime;
-    let startTimeStr = new Date(activeTimer.startTime || (Date.now() - totalElapsed * 1000)).toISOString();
+    const now = Date.now();
+    const isRunning = !!activeTimer.startTime;
 
-    if (activeTimer.startTime) {
-      const now = Date.now();
-      totalElapsed += Math.floor((now - activeTimer.startTime) / 1000);
-    }
+    // If it was running, we log the last segment
+    if (isRunning && activeTimer.startTime) {
+      const sessionElapsed = Math.floor((now - activeTimer.startTime) / 1000);
+      const startTimeStr = new Date(activeTimer.startTime).toISOString();
+      const endTimeStr = new Date(now).toISOString();
 
-    // Update task or subtask time
-    const task = tasks.find(t => t.id === activeTimer.taskId);
-    if (task) {
-      if (activeTimer.subtaskId) {
-        // Update subtask time
-        const updatedSubtasks = task.subtasks.map(s =>
-          s.id === activeTimer.subtaskId
-            ? { ...s, timeSpent: (s.timeSpent || 0) + totalElapsed }
-            : s
-        );
-        handleUpdateTask({ ...task, subtasks: updatedSubtasks });
-      } else {
-        // Update task time
-        handleUpdateTask({ ...task, timeSpent: task.timeSpent + totalElapsed });
-      }
+      const task = tasks.find(t => t.id === activeTimer.taskId);
+      if (task) {
+        if (activeTimer.subtaskId) {
+          const updatedSubtasks = task.subtasks.map(s =>
+            s.id === activeTimer.subtaskId
+              ? { ...s, timeSpent: (s.timeSpent || 0) + sessionElapsed }
+              : s
+          );
+          handleUpdateTask({ ...task, subtasks: updatedSubtasks });
+        } else {
+          handleUpdateTask({ ...task, timeSpent: task.timeSpent + sessionElapsed });
+        }
 
-      // Add to time_logs table (time reports)
-      if (currentUser?.id) {
-        api.timeLogs.create({
-          userId: currentUser.id,
-          taskId: activeTimer.taskId,
-          subtaskId: activeTimer.subtaskId,
-          durationSeconds: totalElapsed,
-          startTime: startTimeStr,
-          endTime: new Date().toISOString()
-        }).catch(console.error);
+        if (currentUser?.id) {
+          api.timeLogs.create({
+            userId: currentUser.id,
+            taskId: activeTimer.taskId,
+            projectId: task.projectId,
+            subtaskId: activeTimer.subtaskId,
+            durationSeconds: sessionElapsed,
+            startTime: startTimeStr,
+            endTime: endTimeStr
+          }).catch(console.error);
+        }
       }
     }
 

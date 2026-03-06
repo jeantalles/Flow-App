@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Task, User, Subtask, ActiveTimer, Project } from '@/lib/store';
-import { Button, Badge, StatusSelector, AssigneeSelector } from './ui-elements';
+import { Button, StatusSelector, AssigneeSelector } from './ui-elements';
 import {
   X,
   Calendar,
@@ -14,17 +14,15 @@ import {
   Flag,
   Clock,
   Pencil,
-  MoreHorizontal,
   ArrowLeft,
   Folder,
   Square,
-  Zap
+  Zap,
+  GripVertical
 } from 'lucide-react';
 import { cn, formatDuration } from '@/lib/utils';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
 import { DateSelector } from './DateSelector';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence, Reorder } from 'motion/react';
 
 interface TaskModalProps {
   task: Task;
@@ -70,7 +68,6 @@ export function TaskModal({
   const isTaskTimerRunning = activeTimer?.taskId === task.id && !activeTimer?.subtaskId && !!activeTimer?.startTime;
   const isTaskTimerPaused = activeTimer?.taskId === task.id && !activeTimer?.subtaskId && !activeTimer?.startTime;
 
-  // Calculate total time (task + subtasks)
   const totalSubtaskTime = editedTask.subtasks.reduce((acc, st) => acc + st.timeSpent, 0);
   const totalTimeSpent = editedTask.timeSpent + totalSubtaskTime;
 
@@ -92,7 +89,6 @@ export function TaskModal({
   useEffect(() => {
     let interval: NodeJS.Timeout;
     if (activeTimer && activeTimer.taskId === task.id) {
-      // Calculate initial elapsed based on start time and accumulated time
       const updateElapsed = () => {
         if (!activeTimer.startTime) {
           setElapsed(activeTimer.accumulatedTime);
@@ -112,6 +108,41 @@ export function TaskModal({
     return () => clearInterval(interval);
   }, [activeTimer, task.id]);
 
+  const handleSave = () => {
+    if (isNew && onSaveNew) {
+      onSaveNew(editedTask);
+    } else {
+      onUpdate(editedTask);
+      onClose();
+    }
+  };
+
+  const handleCloseWithCheck = () => {
+    if (editingSubtask) {
+      setEditingSubtask(null);
+      return;
+    }
+
+    const hasChanges = JSON.stringify(task) !== JSON.stringify(editedTask);
+    const hasContent = editedTask.title.trim() !== '' || (editedTask.description && editedTask.description.trim() !== '') || editedTask.subtasks.length > 0;
+
+    if (isNew) {
+      if (hasContent) {
+        handleSave();
+      } else {
+        onClose();
+      }
+      return;
+    }
+
+    if (hasChanges) {
+      onUpdate(editedTask);
+      onClose();
+    } else {
+      onClose();
+    }
+  };
+
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && isOpen && !editingSubtask) {
@@ -123,39 +154,6 @@ export function TaskModal({
   }, [isOpen, editingSubtask, task, editedTask, isNew]);
 
   if (!isOpen) return null;
-
-  const handleSave = () => {
-    if (isNew && onSaveNew) {
-      onSaveNew(editedTask);
-    } else {
-      onUpdate(editedTask);
-      onClose();
-    }
-  };
-
-  const handleCloseWithCheck = () => {
-    // Se estiver editando uma subtarefa, apenas volta para a tarefa principal
-    if (editingSubtask) {
-      setEditingSubtask(null);
-      return;
-    }
-
-    if (isNew) {
-      // Se é uma tarefa nova, apenas fecha (ela não será salva no array global)
-      onClose();
-      return;
-    }
-
-    const hasChanges = JSON.stringify(task) !== JSON.stringify(editedTask);
-
-    if (hasChanges) {
-      if (window.confirm("Você tem alterações não salvas. Deseja realmente sair?")) {
-        onClose();
-      }
-    } else {
-      onClose();
-    }
-  };
 
   const toggleTimer = () => {
     if (isTaskTimerRunning) {
@@ -215,35 +213,8 @@ export function TaskModal({
     });
   };
 
-  const saveManualTime = () => {
-    const [hours, minutes] = editTimeValue.split(':').map(Number);
-    if (!isNaN(hours) && !isNaN(minutes)) {
-      const totalSeconds = (hours * 3600) + (minutes * 60);
-      // We are editing the main task's time specifically here? 
-      // Or the total time? Usually manual edit is for the specific task record.
-      // Let's assume it edits the main task's own time, not subtasks.
-      setEditedTask({ ...editedTask, timeSpent: totalSeconds });
-    }
-    setIsEditingTime(false);
-  };
-
-  const startEditingTime = () => {
-    // When editing, we show the total time or just the task time?
-    // Usually you edit the task's own time.
-    // But the display shows total. 
-    // Let's show the task's own time for editing to avoid confusion, 
-    // or we need a way to distribute the time? 
-    // Simple approach: Edit main task time.
-    const hours = Math.floor(editedTask.timeSpent / 3600);
-    const minutes = Math.floor((editedTask.timeSpent % 3600) / 60);
-    const seconds = editedTask.timeSpent % 60;
-    setEditTimeValue(`${hours}h ${minutes}m ${seconds}s`);
-    setIsEditingTime(true);
-  };
-
   const handleManualTimeChange = (val: string) => {
     setEditTimeValue(val);
-    // Simple parser: looks for numbers followed by h, m, or s
     const h = (val.match(/(\d+)h/)?.[1] || 0);
     const m = (val.match(/(\d+)m/)?.[1] || 0);
     const s = (val.match(/(\d+)s/)?.[1] || 0);
@@ -251,9 +222,14 @@ export function TaskModal({
     setEditedTask({ ...editedTask, timeSpent: totalSeconds });
   };
 
-  // Calculate displayed time (including running timer)
-  // If timer is running on main task, add elapsed to main task time.
-  // If timer is running on subtask, add elapsed to that subtask's time (and thus to total).
+  const startEditingTime = () => {
+    const hours = Math.floor(editedTask.timeSpent / 3600);
+    const minutes = Math.floor((editedTask.timeSpent % 3600) / 60);
+    const seconds = editedTask.timeSpent % 60;
+    setEditTimeValue(`${hours}h ${minutes}m ${seconds}s`);
+    setIsEditingTime(true);
+  };
+
   let currentTotalTime = totalTimeSpent;
   if (activeTimer?.taskId === task.id) {
     currentTotalTime += elapsed;
@@ -285,10 +261,8 @@ export function TaskModal({
           />
         ) : (
           <>
-            {/* Header */}
             <div className="flex items-center justify-between p-6 border-b border-[var(--border)] rounded-t-xl bg-[var(--background)]">
               <div className="flex items-center gap-4">
-                {/* Status Badge */}
                 <StatusSelector
                   status={editedTask.status}
                   onSelect={(status) => setEditedTask({ ...editedTask, status })}
@@ -298,17 +272,15 @@ export function TaskModal({
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2">
                   {isEditingTime ? (
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="text"
-                        value={editTimeValue}
-                        onChange={(e) => handleManualTimeChange(e.target.value)}
-                        className="w-32 px-2 py-1 text-xs border border-[var(--border)] rounded-lg bg-[var(--background)] font-mono focus:ring-1 focus:ring-[var(--primary)] outline-none"
-                        autoFocus
-                        onKeyDown={(e) => e.key === 'Enter' && setIsEditingTime(false)}
-                        onBlur={() => setIsEditingTime(false)}
-                      />
-                    </div>
+                    <input
+                      type="text"
+                      value={editTimeValue}
+                      onChange={(e) => handleManualTimeChange(e.target.value)}
+                      className="w-32 px-2 py-1 text-xs border border-[var(--border)] rounded-lg bg-[var(--background)] font-mono focus:ring-1 focus:ring-[var(--primary)] outline-none"
+                      autoFocus
+                      onKeyDown={(e) => e.key === 'Enter' && setIsEditingTime(false)}
+                      onBlur={() => setIsEditingTime(false)}
+                    />
                   ) : (
                     <button
                       onClick={startEditingTime}
@@ -346,16 +318,10 @@ export function TaskModal({
               </div>
             </div>
 
-            {/* Content */}
             <div className="flex-1 overflow-y-auto p-8">
               <div className="max-w-6xl mx-auto space-y-8">
-
-                {/* Top Section: Split Layout */}
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-
-                  {/* Left Container: Title, Project, Description */}
                   <div className="lg:col-span-2 space-y-6">
-                    {/* Title & Project */}
                     <div className="space-y-4">
                       <input
                         type="text"
@@ -364,8 +330,6 @@ export function TaskModal({
                         className="w-full text-3xl font-bold bg-transparent border-none focus:ring-0 placeholder-[var(--muted-foreground)] p-0"
                         placeholder="Título da tarefa"
                       />
-
-                      {/* Project Selector - Under Title */}
                       <div className="flex items-center gap-2 text-[var(--muted-foreground)]">
                         <Folder size={16} />
                         <select
@@ -380,8 +344,6 @@ export function TaskModal({
                         </select>
                       </div>
                     </div>
-
-                    {/* Description */}
                     <div>
                       <label className="block text-sm font-medium text-[var(--muted-foreground)] mb-2">Descrição</label>
                       <textarea
@@ -393,10 +355,8 @@ export function TaskModal({
                     </div>
                   </div>
 
-                  {/* Right Container: Properties Grid */}
                   <div className="space-y-6">
                     <div className="grid grid-cols-2 gap-4">
-                      {/* Priority */}
                       <div className="col-span-1">
                         <label className="block text-xs font-medium text-[var(--muted-foreground)] mb-1.5 flex items-center gap-1.5">
                           <Flag size={14} /> Prioridade
@@ -412,8 +372,6 @@ export function TaskModal({
                           <option value="high">Alta</option>
                         </select>
                       </div>
-
-                      {/* Assignee */}
                       <div className="col-span-1">
                         <label className="block text-xs font-medium text-[var(--muted-foreground)] mb-1.5 flex items-center gap-1.5">
                           <UserIcon size={14} /> Responsável
@@ -429,8 +387,6 @@ export function TaskModal({
                           ))}
                         </select>
                       </div>
-
-                      {/* Start Date */}
                       <div className="col-span-1">
                         <label className="block text-xs font-medium text-[var(--muted-foreground)] mb-1.5 flex items-center gap-1.5">
                           <Calendar size={14} /> Início
@@ -440,10 +396,9 @@ export function TaskModal({
                           onSelect={(date) => setEditedTask({ ...editedTask, startDate: date })}
                           size="md"
                           className="w-full"
+                          isStart
                         />
                       </div>
-
-                      {/* End Date */}
                       <div className="col-span-1">
                         <label className="block text-xs font-medium text-[var(--muted-foreground)] mb-1.5 flex items-center gap-1.5">
                           <Calendar size={14} /> Conclusão
@@ -459,7 +414,6 @@ export function TaskModal({
                   </div>
                 </div>
 
-                {/* Bottom Section: Subtasks - Full Width */}
                 <div className="border-t border-[var(--border)] pt-8">
                   <div className="flex items-center justify-between mb-4">
                     <label className="text-lg font-medium flex items-center gap-2">
@@ -470,51 +424,56 @@ export function TaskModal({
                     </span>
                   </div>
 
-                  <div className="space-y-3">
+                  <Reorder.Group
+                    axis="y"
+                    values={editedTask.subtasks}
+                    onReorder={(newSubtasks) => setEditedTask({ ...editedTask, subtasks: newSubtasks })}
+                    className="space-y-3"
+                  >
                     {editedTask.subtasks.map(st => (
-                      <SubtaskItem
-                        key={st.id}
-                        subtask={st}
-                        users={users}
-                        onToggle={() => toggleSubtask(st.id)}
-                        onUpdate={(field) => updateSubtaskField(st.id, field)}
-                        onDelete={() => deleteSubtask(st.id)}
-                        onEdit={() => setEditingSubtask(st)}
-                      />
+                      <Reorder.Item key={st.id} value={st}>
+                        <SubtaskItem
+                          subtask={st}
+                          users={users}
+                          onToggle={() => toggleSubtask(st.id)}
+                          onUpdate={(field) => updateSubtaskField(st.id, field)}
+                          onDelete={() => deleteSubtask(st.id)}
+                          onEdit={() => setEditingSubtask(st)}
+                        />
+                      </Reorder.Item>
                     ))}
+                  </Reorder.Group>
 
-                    <div className="flex gap-2 mt-4">
-                      <input
-                        type="text"
-                        value={newSubtaskTitle}
-                        onChange={(e) => setNewSubtaskTitle(e.target.value)}
-                        onKeyDown={(e) => e.key === 'Enter' && addSubtask()}
-                        placeholder="Adicionar nova subtarefa..."
-                        className="flex-1 text-sm bg-[var(--muted)]/30 border border-[var(--border)] rounded-md px-4 py-2.5 outline-none focus:ring-1 focus:ring-[var(--primary)]"
-                      />
-                      <Button size="sm" variant="secondary" onClick={addSubtask} disabled={!newSubtaskTitle.trim()}>
-                        <Plus size={16} />
-                      </Button>
-                    </div>
+                  <div className="flex gap-2 mt-4">
+                    <input
+                      type="text"
+                      value={newSubtaskTitle}
+                      onChange={(e) => setNewSubtaskTitle(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && addSubtask()}
+                      placeholder="Adicionar nova subtarefa..."
+                      className="flex-1 text-sm bg-[var(--muted)]/30 border border-[var(--border)] rounded-md px-4 py-2.5 outline-none focus:ring-1 focus:ring-[var(--primary)]"
+                    />
+                    <Button size="sm" variant="secondary" onClick={addSubtask} disabled={!newSubtaskTitle.trim()}>
+                      <Plus size={16} />
+                    </Button>
                   </div>
                 </div>
               </div>
-            </div>
 
-            {/* Footer */}
-            <div className="p-6 border-t border-[var(--border)] flex justify-between items-center rounded-b-xl bg-[var(--background)]">
-              <button
-                onClick={() => { onDelete(task.id); }}
-                className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800 transition-colors"
-                title="Excluir Tarefa"
-              >
-                <Trash2 size={18} />
-              </button>
-              <div className="flex gap-3">
-                <Button variant="secondary" onClick={handleCloseWithCheck}>Cancelar</Button>
-                <Button onClick={handleSave} className="gap-2 bg-[#165DFC] hover:bg-[#165DFC]/90 border-none">
-                  <Save size={16} /> {isNew ? 'Criar Tarefa' : 'Salvar'}
-                </Button>
+              <div className="p-6 border-t border-[var(--border)] flex justify-between items-center rounded-b-xl bg-[var(--background)] mt-8">
+                <button
+                  onClick={() => { onDelete(task.id); }}
+                  className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800 transition-colors"
+                  title="Excluir Tarefa"
+                >
+                  <Trash2 size={18} />
+                </button>
+                <div className="flex gap-3">
+                  <Button variant="secondary" onClick={handleCloseWithCheck}>Cancelar</Button>
+                  <Button onClick={handleSave} className="gap-2 bg-[#165DFC] hover:bg-[#165DFC]/90 border-none">
+                    <Save size={16} /> {isNew ? 'Criar Tarefa' : 'Salvar'}
+                  </Button>
+                </div>
               </div>
             </div>
           </>
@@ -560,18 +519,18 @@ const SubtaskItem: React.FC<SubtaskItemProps> = ({
     }
     setIsRenaming(false);
   };
+
   return (
-    <div
-      className="flex items-center gap-3 group p-3 hover:bg-[var(--muted)]/30 rounded-lg transition-colors border border-[var(--border)] bg-[var(--background)]"
-    >
+    <div className="flex items-center gap-3 group p-3 hover:bg-[var(--muted)]/30 rounded-lg transition-colors border border-[var(--border)] bg-[var(--background)]">
+      <div className="text-[var(--muted-foreground)] cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity">
+        <GripVertical size={16} />
+      </div>
       <input
         type="checkbox"
         checked={subtask.completed}
         onChange={(e) => { e.stopPropagation(); onToggle(); }}
         className="w-5 h-5 rounded border-[var(--muted-foreground)] text-[var(--primary)] focus:ring-[var(--primary)]"
       />
-
-      {/* Title */}
       <div className="flex-1 min-w-0 flex items-center gap-2">
         {isRenaming ? (
           <input
@@ -608,20 +567,15 @@ const SubtaskItem: React.FC<SubtaskItemProps> = ({
           </>
         )}
       </div>
-
-      {/* Date Picker */}
       <DateSelector
         date={subtask.endDate}
         onSelect={(date) => onUpdate({ endDate: date })}
       />
-
-      {/* Assignee */}
       <AssigneeSelector
         assigneeId={subtask.assigneeId}
         users={users}
         onSelect={(userId) => onUpdate({ assigneeId: userId })}
       />
-
       <button
         onClick={(e) => { e.stopPropagation(); onDelete(); }}
         className="opacity-0 group-hover:opacity-100 text-red-500 hover:text-red-600 transition-opacity p-1"
@@ -723,7 +677,6 @@ function SubtaskView({
 
   return (
     <div className="flex flex-col h-full">
-      {/* Header - Matching Main Task */}
       <div className="flex items-center justify-between p-6 border-b border-[var(--border)] rounded-t-xl bg-[var(--background)]">
         <div className="flex items-center gap-4">
           <button
@@ -759,7 +712,6 @@ function SubtaskView({
               {formatDuration(editedSubtask.timeSpent + elapsed)}
             </button>
           )}
-          {/* Zap icon removed per user request */}
           <Button
             variant={isTimerRunning ? "warning" : isTimerPaused ? "success" : "primary"}
             size="sm"
@@ -777,58 +729,36 @@ function SubtaskView({
         </div>
       </div>
 
-      {/* Content - Matching Main Task Layout */}
       <div className="flex-1 overflow-y-auto p-8">
         <div className="max-w-6xl mx-auto space-y-8">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Left Container */}
             <div className="lg:col-span-2 space-y-6">
               <div className="space-y-4">
-                <input
-                  type="text"
-                  value={editedSubtask.title}
-                  onChange={(e) => setEditedSubtask({ ...editedSubtask, title: e.target.value })}
-                  className="w-full text-3xl font-bold bg-transparent border-none focus:ring-0 placeholder-[var(--muted-foreground)] p-0"
-                  placeholder="Título da subtarefa"
-                />
-                <div className="flex items-center gap-2 text-[var(--muted-foreground)] text-sm font-medium">
-                  <Folder size={16} />
-                  <span>{parentTaskTitle}</span>
-                  <span className="opacity-50">/</span>
-                  <span className="opacity-50">Subtarefa</span>
+                <div className="flex flex-col gap-1">
+                  <span className="text-sm text-[var(--muted-foreground)] font-medium">Tarefa: {parentTaskTitle}</span>
+                  <input
+                    type="text"
+                    value={editedSubtask.title}
+                    onChange={(e) => setEditedSubtask({ ...editedSubtask, title: e.target.value })}
+                    className="w-full text-3xl font-bold bg-transparent border-none focus:ring-0 placeholder-[var(--muted-foreground)] p-0"
+                    placeholder="Título da subtarefa"
+                  />
                 </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-[var(--muted-foreground)] mb-2">Descrição</label>
-                <textarea
-                  value={editedSubtask.description || ''}
-                  onChange={(e) => setEditedSubtask({ ...editedSubtask, description: e.target.value })}
-                  className="w-full min-h-[150px] p-4 rounded-xl bg-[var(--muted)]/30 border border-[var(--border)] focus:ring-2 focus:ring-[var(--primary)] outline-none resize-y text-base"
-                  placeholder="Adicione detalhes..."
-                />
               </div>
             </div>
 
-            {/* Right Container */}
             <div className="space-y-6">
               <div className="grid grid-cols-2 gap-4">
                 <div className="col-span-1">
                   <label className="block text-xs font-medium text-[var(--muted-foreground)] mb-1.5 flex items-center gap-1.5">
                     <UserIcon size={14} /> Responsável
                   </label>
-                  <select
-                    value={editedSubtask.assigneeId || ''}
-                    onChange={(e) => setEditedSubtask({ ...editedSubtask, assigneeId: e.target.value || undefined })}
-                    className="w-full p-2 rounded-lg bg-[var(--muted)]/30 border border-[var(--border)] outline-none text-sm"
-                  >
-                    <option value="">Sem responsável</option>
-                    {users.map(u => (
-                      <option key={u.id} value={u.id}>{u.name}</option>
-                    ))}
-                  </select>
+                  <AssigneeSelector
+                    assigneeId={editedSubtask.assigneeId}
+                    users={users}
+                    onSelect={(userId) => setEditedSubtask({ ...editedSubtask, assigneeId: userId })}
+                  />
                 </div>
-
                 <div className="col-span-1">
                   <label className="block text-xs font-medium text-[var(--muted-foreground)] mb-1.5 flex items-center gap-1.5">
                     <Calendar size={14} /> Início
@@ -838,9 +768,9 @@ function SubtaskView({
                     onSelect={(date) => setEditedSubtask({ ...editedSubtask, startDate: date })}
                     size="md"
                     className="w-full"
+                    isStart
                   />
                 </div>
-
                 <div className="col-span-1">
                   <label className="block text-xs font-medium text-[var(--muted-foreground)] mb-1.5 flex items-center gap-1.5">
                     <Calendar size={14} /> Conclusão
@@ -852,17 +782,12 @@ function SubtaskView({
                     className="w-full"
                   />
                 </div>
-
-                <div className="col-span-1">
-                  {/* Placeholder to match grid if needed */}
-                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Footer */}
       <div className="p-6 border-t border-[var(--border)] flex justify-end gap-3 rounded-b-xl bg-[var(--background)]">
         <Button variant="secondary" onClick={handleBack}>Cancelar</Button>
         <Button onClick={handleBack} className="gap-2 bg-[#165DFC] hover:bg-[#165DFC]/90 border-none">

@@ -70,6 +70,25 @@ export function WeeklyView({ currentUser }: WeeklyViewProps) {
         }
     }, [loadNote, editor]);
 
+    // Auto-save when content changes (debounced)
+    useEffect(() => {
+        if (!editor) return;
+
+        const timer = setTimeout(() => {
+            handleSave();
+        }, 1000); // 1-second debounce to avoid too many writes
+
+        const handleUpdate = () => {
+            // This is just to trigger the effect
+        };
+
+        editor.on('update', handleUpdate);
+        return () => {
+            clearTimeout(timer);
+            editor.off('update', handleUpdate);
+        };
+    }, [editor, editor?.getHTML()]); // Re-run when content actually changes
+
     const handleSave = async () => {
         if (!editor || isSaving) return;
         setIsSaving(true);

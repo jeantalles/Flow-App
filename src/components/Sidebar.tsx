@@ -84,9 +84,12 @@ export function Sidebar({
       {/* Header */}
       <div className="p-6">
         <div className="flex items-center gap-3 mb-6">
-          <div className="w-9 h-9 rounded-xl overflow-hidden shadow-lg shadow-indigo-500/10">
-            <img src="/logo.jpg" alt="Flow Logo" className="w-full h-full object-cover" />
-          </div>
+          <img
+            src="/logo.jpg"
+            alt="Flow Logo"
+            className="w-9 h-9 rounded-xl object-cover"
+            style={{ imageRendering: 'auto' }}
+          />
           <span className="font-bold text-xl tracking-tight bg-gradient-to-br from-[var(--foreground)] to-[var(--muted-foreground)] bg-clip-text text-transparent">Flow</span>
         </div>
 
@@ -116,17 +119,6 @@ export function Sidebar({
           <Button
             className={cn(
               "w-full justify-start gap-2 h-11",
-              currentView === 'weekly' ? "bg-[#E0E7FF] text-[#4F46E5] hover:bg-[#E0E7FF]" : "text-[var(--muted-foreground)]"
-            )}
-            variant="ghost"
-            onClick={onOpenWeekly}
-          >
-            <Calendar size={18} />
-            Weekly
-          </Button>
-          <Button
-            className={cn(
-              "w-full justify-start gap-2 h-11",
               currentView === 'project' && activeProjectId === null ? "bg-[#E0E7FF] text-[#4F46E5] hover:bg-[#E0E7FF]" : "text-[var(--muted-foreground)]"
             )}
             variant="ghost"
@@ -134,6 +126,17 @@ export function Sidebar({
           >
             <LayoutDashboard size={18} />
             Visão Geral
+          </Button>
+          <Button
+            className={cn(
+              "w-full justify-start gap-2 h-11",
+              currentView === 'weekly' ? "bg-[#E0E7FF] text-[#4F46E5] hover:bg-[#E0E7FF]" : "text-[var(--muted-foreground)]"
+            )}
+            variant="ghost"
+            onClick={onOpenWeekly}
+          >
+            <Calendar size={18} />
+            Weekly
           </Button>
           <Button
             className={cn(

@@ -14,15 +14,16 @@ interface DateSelectorProps {
   onSelect: (date?: string) => void;
   className?: string;
   size?: 'sm' | 'md';
+  isStart?: boolean;
 }
 
-export function DateSelector({ date, onSelect, className, size = 'sm' }: DateSelectorProps) {
+export function DateSelector({ date, onSelect, className, size = 'sm', isStart }: DateSelectorProps) {
   const [showCalendar, setShowCalendar] = useState(false);
   const [coords, setCoords] = useState({ top: 0, left: 0, openUp: false });
   const containerRef = useRef<HTMLDivElement>(null);
 
   const dateObj = date ? new Date(date) : null;
-  const isOverdue = dateObj && dateObj < startOfToday() && !isToday(dateObj);
+  const isOverdue = !isStart && dateObj && dateObj < startOfToday() && !isToday(dateObj);
 
   useEffect(() => {
     if (showCalendar && containerRef.current) {

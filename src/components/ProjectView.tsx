@@ -624,7 +624,7 @@ const SubtaskRow: React.FC<{
           <div className="flex items-center gap-2.5 w-full">
             <span
               onClick={(e) => { e.stopPropagation(); onClick(); }}
-              className={cn("truncate cursor-pointer hover:underline font-medium", subtask.completed && "text-[var(--muted-foreground)] line-through opacity-60")}
+              className={cn("truncate cursor-pointer hover:underline font-medium", subtask.completed && "text-[var(--muted-foreground)]")}
             >
               {subtask.title}
             </span>

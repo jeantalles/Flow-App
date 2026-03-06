@@ -63,17 +63,18 @@ export function MyTasksView({
       ...tasks.filter(t =>
         !t.deletedAt &&
         t.status !== 'done' &&
+        t.assigneeId === currentUser.id &&
         (t.isToday || (t.endDate && (t.endDate.startsWith(today) || t.endDate <= today)))
       ).map(t => ({ ...t, type: 'task' as const })),
       ...tasks.flatMap(t =>
         t.subtasks
-          .filter(st => !t.deletedAt && st.isToday && !st.completed)
+          .filter(st => !t.deletedAt && st.assigneeId === currentUser.id && st.isToday && !st.completed)
           .map(st => ({ ...st, parentTask: t, type: 'subtask' as const }))
       )
     ].sort((a, b) => (a.todayOrder ?? 1000) - (b.todayOrder ?? 1000));
 
     setLocalTodayTasks(rawTasks);
-  }, [tasks, today]);
+  }, [tasks, today, currentUser.id]);
 
   const handleReorderToday = (newItems: any[]) => {
     setLocalTodayTasks(newItems);

@@ -214,10 +214,11 @@ export const api = {
     },
 
     timeLogs: {
-        async create(log: { userId: string, taskId: string, subtaskId?: string, durationSeconds: number, startTime: string, endTime: string }) {
+        async create(log: { userId: string, taskId: string, projectId?: string, subtaskId?: string, durationSeconds: number, startTime: string, endTime: string }) {
             const { error } = await supabase.from('time_logs').insert({
                 user_id: log.userId,
                 task_id: log.taskId,
+                project_id: log.projectId,
                 subtask_id: log.subtaskId,
                 duration_seconds: log.durationSeconds,
                 start_time: log.startTime,
