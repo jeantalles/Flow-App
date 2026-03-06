@@ -191,7 +191,7 @@ export function GanttChart({ tasks, projects, onTaskClick, onUpdateTask, users }
   return (
     <div className={cn(
       "flex flex-col h-full bg-[var(--background)] rounded-xl border border-[var(--border)] overflow-hidden select-none transition-all duration-300",
-      isFullHeight && "fixed inset-y-0 right-0 left-64 z-[100] bg-[var(--background)] rounded-none border-none border-l border-[var(--border)] shadow-2xl"
+      isFullHeight && "fixed inset-y-0 right-0 left-64 z-[100] bg-[var(--background)] rounded-none border-none border-l border-[var(--border)]"
     )}>
       {/* Controls */}
       <div className="flex items-center justify-between p-4 border-b border-[var(--border)] bg-[var(--muted)]/20">
