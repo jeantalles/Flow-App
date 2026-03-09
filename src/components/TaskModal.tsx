@@ -512,6 +512,7 @@ const SubtaskItem: React.FC<SubtaskItemProps> = ({
   const [isRenaming, setIsRenaming] = useState(false);
   const [tempTitle, setTempTitle] = useState(subtask.title);
   const inputRef = useRef<HTMLInputElement>(null);
+  const isDragging = useRef(false);
 
   useEffect(() => {
     if (isRenaming && inputRef.current) {
@@ -532,7 +533,9 @@ const SubtaskItem: React.FC<SubtaskItemProps> = ({
   return (
     <div
       className="flex items-center gap-3 group p-3 hover:bg-[var(--muted)]/30 rounded-lg transition-colors border border-[var(--border)] bg-[var(--background)] cursor-pointer"
-      onClick={onEdit}
+      onPointerDown={() => { isDragging.current = false; }}
+      onPointerMove={() => { isDragging.current = true; }}
+      onClick={() => { if (!isDragging.current) onEdit(); }}
     >
       <div className="text-[var(--muted-foreground)] cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
         <GripVertical size={16} />
@@ -581,15 +584,6 @@ const SubtaskItem: React.FC<SubtaskItemProps> = ({
         )}
       </div>
       <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-        <DateSelector
-          date={subtask.endDate}
-          onSelect={(date) => onUpdate({ endDate: date })}
-        />
-        <AssigneeSelector
-          assigneeId={subtask.assigneeId}
-          users={users}
-          onSelect={(userId) => onUpdate({ assigneeId: userId })}
-        />
         <button
           onClick={(e) => { e.stopPropagation(); onUpdate({ isToday: !subtask.isToday }); }}
           className={cn(
@@ -602,6 +596,15 @@ const SubtaskItem: React.FC<SubtaskItemProps> = ({
         >
           <Zap size={16} className={subtask.isToday ? "fill-amber-500" : ""} />
         </button>
+        <DateSelector
+          date={subtask.endDate}
+          onSelect={(date) => onUpdate({ endDate: date })}
+        />
+        <AssigneeSelector
+          assigneeId={subtask.assigneeId}
+          users={users}
+          onSelect={(userId) => onUpdate({ assigneeId: userId })}
+        />
         <button
           onClick={(e) => { e.stopPropagation(); onDelete(); }}
           className="opacity-0 group-hover:opacity-100 text-red-500 hover:text-red-600 transition-opacity p-1"
