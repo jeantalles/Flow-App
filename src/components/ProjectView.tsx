@@ -16,11 +16,13 @@ import {
   Trash2,
   Eye,
   EyeOff,
-  LayoutDashboard as LayoutDashboardIcon
+  LayoutDashboard as LayoutDashboardIcon,
+  CheckSquare as CheckSquareIcon
 } from 'lucide-react';
 import { formatRelativeDate } from '@/lib/utils';
 import { DateSelector } from './DateSelector';
 import { GanttChart } from './GanttChart';
+import { motion } from 'motion/react';
 
 interface ProjectViewProps {
   projects: Project[];
@@ -56,6 +58,14 @@ export function ProjectView({
   const [inlineCreating, setInlineCreating] = useState<{ projectId?: string, status: Task['status'] } | null>(null);
   const [inlineTitle, setInlineTitle] = useState('');
   const inlineInputRef = useRef<HTMLInputElement>(null);
+  const [groupByProject, setGroupByProject] = useState(() => {
+    const saved = localStorage.getItem('studioflow_overview_group_by_project');
+    return saved !== null ? JSON.parse(saved) : true;
+  });
+
+  useEffect(() => {
+    localStorage.setItem('studioflow_overview_group_by_project', JSON.stringify(groupByProject));
+  }, [groupByProject]);
 
   const activeProject = activeProjectId ? projects.find(p => p.id === activeProjectId) : null;
 
@@ -216,6 +226,25 @@ export function ProjectView({
             {viewMode === 'gantt' && <span className="text-xs">Gantt</span>}
           </button>
         </div>
+
+        {!activeProjectId && (
+          <div className="flex items-center gap-3 px-4 border-l border-[var(--border)]/60">
+            <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Agrupar Projetos</span>
+            <button
+              onClick={() => setGroupByProject(!groupByProject)}
+              className={cn(
+                "relative w-[42px] h-[24px] rounded-full transition-colors duration-300 ease-in-out outline-none shrink-0",
+                groupByProject ? "bg-[#165DFC]" : "bg-slate-200"
+              )}
+            >
+              <motion.div
+                animate={{ x: groupByProject ? 20 : 2 }}
+                className="absolute top-[2px] w-[20px] h-[20px] bg-white rounded-full shadow-md shadow-slate-400"
+                transition={{ type: "spring", stiffness: 500, damping: 30 }}
+              />
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Content Area */}
@@ -271,62 +300,80 @@ export function ProjectView({
                       </div>
                     )}
 
-                    {projects.map(project => {
-                      const projectTasks = statusTasks.filter(t => t.projectId === project.id);
-                      if (projectTasks.length === 0) return null;
+                    {(!activeProjectId && groupByProject) ? (
+                      <>
+                        {projects.map(project => {
+                          const projectTasks = statusTasks.filter(t => t.projectId === project.id);
+                          if (projectTasks.length === 0) return null;
 
-                      return (
-                        <div key={project.id} className="space-y-3">
-                          {!activeProjectId && (
-                            <div className="flex items-center gap-2.5 px-1 py-1">
-                              <span className="w-2.5 h-2.5 rounded-full shadow-sm" style={{ backgroundColor: project.color }} />
-                              <h4 className="font-black text-[15px] text-[var(--muted-foreground)] uppercase tracking-wide">{project.name}</h4>
+                          return (
+                            <div key={project.id} className="space-y-3">
+                              <div className="flex items-center gap-2.5 px-1 py-1">
+                                <span className="w-2.5 h-2.5 rounded-full shadow-sm" style={{ backgroundColor: project.color }} />
+                                <h4 className="font-black text-[15px] text-[var(--muted-foreground)] uppercase tracking-wide">{project.name}</h4>
+                              </div>
+                              <div className="space-y-2">
+                                {projectTasks.map(task => (
+                                  <TaskRow
+                                    key={task.id}
+                                    task={task}
+                                    users={users}
+                                    onClick={(subtaskId) => onTaskClick(task, subtaskId)}
+                                    onUpdateTask={onUpdateTask}
+                                    onDeleteTask={onDeleteTask}
+                                    isExpanded={expandedTasks[task.id]}
+                                    toggleExpand={() => toggleTaskExpand(task.id)}
+                                  />
+                                ))}
+                              </div>
                             </div>
-                          )}
-                          <div className="space-y-2">
-                            {projectTasks.map(task => (
-                              <TaskRow
-                                key={task.id}
-                                task={task}
-                                users={users}
-                                onClick={(subtaskId) => onTaskClick(task, subtaskId)}
-                                onUpdateTask={onUpdateTask}
-                                onDeleteTask={onDeleteTask}
-                                isExpanded={expandedTasks[task.id]}
-                                toggleExpand={() => toggleTaskExpand(task.id)}
-                              />
-                            ))}
-                          </div>
-                        </div>
-                      );
-                    })}
+                          );
+                        })}
 
-                    {!activeProjectId && (() => {
-                      const noProjectTasks = statusTasks.filter(t => !t.projectId);
-                      if (noProjectTasks.length === 0) return null;
-                      return (
-                        <div className="space-y-3">
-                          <div className="flex items-center gap-2.5 px-1 py-1">
-                            <span className="w-2.5 h-2.5 rounded-full bg-slate-400 shadow-sm" />
-                            <h4 className="font-black text-[15px] text-[var(--muted-foreground)] uppercase tracking-wide">Sem Projeto</h4>
-                          </div>
-                          <div className="space-y-2">
-                            {noProjectTasks.map(task => (
-                              <TaskRow
-                                key={task.id}
-                                task={task}
-                                users={users}
-                                onClick={(subtaskId) => onTaskClick(task, subtaskId)}
-                                onUpdateTask={onUpdateTask}
-                                onDeleteTask={onDeleteTask}
-                                isExpanded={expandedTasks[task.id]}
-                                toggleExpand={() => toggleTaskExpand(task.id)}
-                              />
-                            ))}
-                          </div>
-                        </div>
-                      );
-                    })()}
+                        {(() => {
+                          const noProjectTasks = statusTasks.filter(t => !t.projectId);
+                          if (noProjectTasks.length === 0) return null;
+                          return (
+                            <div className="space-y-3">
+                              <div className="flex items-center gap-2.5 px-1 py-1">
+                                <span className="w-2.5 h-2.5 rounded-full bg-slate-400 shadow-sm" />
+                                <h4 className="font-black text-[15px] text-[var(--muted-foreground)] uppercase tracking-wide">Sem Projeto</h4>
+                              </div>
+                              <div className="space-y-2">
+                                {noProjectTasks.map(task => (
+                                  <TaskRow
+                                    key={task.id}
+                                    task={task}
+                                    users={users}
+                                    onClick={(subtaskId) => onTaskClick(task, subtaskId)}
+                                    onUpdateTask={onUpdateTask}
+                                    onDeleteTask={onDeleteTask}
+                                    isExpanded={expandedTasks[task.id]}
+                                    toggleExpand={() => toggleTaskExpand(task.id)}
+                                  />
+                                ))}
+                              </div>
+                            </div>
+                          );
+                        })()}
+                      </>
+                    ) : (
+                      <div className="space-y-2">
+                        {statusTasks.map(task => (
+                          <TaskRow
+                            key={task.id}
+                            task={task}
+                            users={users}
+                            project={projects.find(p => p.id === task.projectId)}
+                            onClick={(subtaskId) => onTaskClick(task, subtaskId)}
+                            onUpdateTask={onUpdateTask}
+                            onDeleteTask={onDeleteTask}
+                            isExpanded={expandedTasks[task.id]}
+                            toggleExpand={() => toggleTaskExpand(task.id)}
+                          />
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
               );
@@ -367,6 +414,7 @@ export function ProjectView({
               setInlineTitle={setInlineTitle}
               onInlineSubmit={handleInlineSubmit}
               activeProjectId={activeProjectId}
+              groupByProject={groupByProject}
             />
             <KanbanColumn
               title="Em Andamento"
@@ -389,6 +437,7 @@ export function ProjectView({
               setInlineTitle={setInlineTitle}
               onInlineSubmit={handleInlineSubmit}
               activeProjectId={activeProjectId}
+              groupByProject={groupByProject}
             />
             <KanbanColumn
               title="Concluído"
@@ -413,6 +462,7 @@ export function ProjectView({
               setInlineTitle={setInlineTitle}
               onInlineSubmit={handleInlineSubmit}
               activeProjectId={activeProjectId}
+              groupByProject={groupByProject}
             />
           </div>
         )}
@@ -434,12 +484,13 @@ export function ProjectView({
 const TaskRow: React.FC<{
   task: Task,
   users: User[],
+  project?: Project,
   onClick: (subtaskId?: string) => void,
   onUpdateTask: (t: Task) => void,
   onDeleteTask: (id: string) => void,
   isExpanded: boolean,
   toggleExpand: () => void
-}> = ({ task, users, onClick, onUpdateTask, onDeleteTask, isExpanded, toggleExpand }) => {
+}> = ({ task, users, project, onClick, onUpdateTask, onDeleteTask, isExpanded, toggleExpand }) => {
   const [showOptionsMenu, setShowOptionsMenu] = useState(false);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editedTitle, setEditedTitle] = useState(task.title);
@@ -490,7 +541,7 @@ const TaskRow: React.FC<{
           onSelect={(status) => onUpdateTask({ ...task, status })}
         />
 
-        <div className="flex-1 min-w-0 group/title flex items-center gap-3">
+        <div className="flex-1 min-w-0 group/title">
           {isEditingTitle ? (
             <input
               type="text"
@@ -515,6 +566,26 @@ const TaskRow: React.FC<{
               </button>
             </div>
           )}
+          <div className="flex items-center gap-3 mt-1">
+            {project && (
+              <span
+                className="text-xs font-bold uppercase tracking-wide px-2.5 py-1 rounded-md border flex items-center gap-1.5"
+                style={{
+                  backgroundColor: `${project.color}15`,
+                  color: project.color,
+                  borderColor: `${project.color}30`
+                }}
+              >
+                <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: project.color }} />
+                {project.name}
+              </span>
+            )}
+            {task.subtasks.length > 0 && (
+              <span className="text-[10px] text-[var(--muted-foreground)] font-bold flex items-center gap-1">
+                • <CheckSquareIcon size={10} /> {task.subtasks.filter(s => s.completed).length}/{task.subtasks.length}
+              </span>
+            )}
+          </div>
         </div>
 
         <div className="flex items-center gap-5">
@@ -698,18 +769,22 @@ const KanbanColumn: React.FC<{
   inlineTitle: string,
   setInlineTitle: (val: string) => void,
   onInlineSubmit: (title: string, projectId: string, status: Task['status']) => void,
-  activeProjectId: string | null
-}> = ({ title, status, tasks, users, projects, onTaskClick, onUpdateTask, onCreateTask, color, onDragStart, onDragOver, onDrop, expandedTasks, toggleTaskExpand, showCompletedTasks, setShowCompletedTasks, inlineCreating, setInlineCreating, inlineTitle, setInlineTitle, onInlineSubmit, activeProjectId }) => {
+  activeProjectId: string | null,
+  groupByProject?: boolean
+}> = ({ title, status, tasks, users, projects, onTaskClick, onUpdateTask, onCreateTask, color, onDragStart, onDragOver, onDrop, expandedTasks, toggleTaskExpand, showCompletedTasks, setShowCompletedTasks, inlineCreating, setInlineCreating, inlineTitle, setInlineTitle, onInlineSubmit, activeProjectId, groupByProject }) => {
 
   const filteredTasks = status === 'done' && showCompletedTasks === false ? [] : tasks;
 
-  const tasksByProject = projects.map(p => ({
+  // Use the same logic as MyTasksView for Kanban grouping in Visão Geral
+  const shouldGroup = groupByProject !== false && !activeProjectId;
+
+  const tasksByProject = shouldGroup ? projects.map(p => ({
     project: p,
     tasks: filteredTasks.filter(t => t.projectId === p.id)
-  })).filter(g => g.tasks.length > 0);
+  })).filter(g => g.tasks.length > 0) : [];
 
   const tasksWithoutProject = filteredTasks.filter(t => !t.projectId);
-  if (tasksWithoutProject.length > 0) {
+  if (shouldGroup && tasksWithoutProject.length > 0) {
     tasksByProject.push({
       project: { id: 'no-project', name: 'Sem Projeto', color: '#94a3b8' } as Project,
       tasks: tasksWithoutProject
@@ -753,29 +828,48 @@ const KanbanColumn: React.FC<{
       </div>
 
       <div className="flex-1 overflow-y-auto space-y-8 pb-6 px-1">
-        {tasksByProject.map(({ project, tasks }) => (
-          <div key={project.id} className="space-y-3">
-            <div className="flex items-center gap-2.5 px-2 py-1">
-              <span className="w-2 h-2 rounded-full shadow-sm" style={{ backgroundColor: project.color }} />
-              <span className="text-[14px] font-black text-[var(--muted-foreground)] uppercase tracking-wide">{project.name}</span>
-            </div>
+        {shouldGroup ? (
+          tasksByProject.map(({ project, tasks }) => (
+            <div key={project.id} className="space-y-3">
+              <div className="flex items-center gap-2.5 px-2 py-1">
+                <span className="w-2 h-2 rounded-full shadow-sm" style={{ backgroundColor: project.color }} />
+                <span className="text-[14px] font-black text-[var(--muted-foreground)] uppercase tracking-wide">{project.name}</span>
+              </div>
 
-            <div className="space-y-3">
-              {tasks.map(task => (
-                <KanbanCard
-                  key={task.id}
-                  task={task}
-                  users={users}
-                  onTaskClick={onTaskClick}
-                  onUpdateTask={onUpdateTask}
-                  onDragStart={onDragStart}
-                  expandedTasks={expandedTasks}
-                  toggleTaskExpand={toggleTaskExpand}
-                />
-              ))}
+              <div className="space-y-3">
+                {tasks.map(task => (
+                  <KanbanCard
+                    key={task.id}
+                    task={task}
+                    users={users}
+                    onTaskClick={onTaskClick}
+                    onUpdateTask={onUpdateTask}
+                    onDragStart={onDragStart}
+                    expandedTasks={expandedTasks}
+                    toggleTaskExpand={toggleTaskExpand}
+                  />
+                ))}
+              </div>
             </div>
+          ))
+        ) : (
+          <div className="space-y-3">
+            {filteredTasks.map(task => (
+              <KanbanCard
+                key={task.id}
+                task={task}
+                users={users}
+                project={projects.find(p => p.id === task.projectId)}
+                onTaskClick={onTaskClick}
+                onUpdateTask={onUpdateTask}
+                onDragStart={onDragStart}
+                expandedTasks={expandedTasks}
+                toggleTaskExpand={toggleTaskExpand}
+                groupByProject={groupByProject}
+              />
+            ))}
           </div>
-        ))}
+        )}
 
         {inlineCreating?.status === status && (
           <div className="mt-2 px-1">
@@ -807,12 +901,14 @@ const KanbanColumn: React.FC<{
 const KanbanCard: React.FC<{
   task: Task,
   users: User[],
+  project?: Project,
   onTaskClick: (t: Task) => void,
   onUpdateTask: (t: Task) => void,
   onDragStart: (e: React.DragEvent, id: string) => void,
   expandedTasks: Record<string, boolean>,
-  toggleTaskExpand: (id: string) => void
-}> = ({ task, users, onTaskClick, onUpdateTask, onDragStart, expandedTasks, toggleTaskExpand }) => {
+  toggleTaskExpand: (id: string) => void,
+  groupByProject?: boolean
+}> = ({ task, users, project, onTaskClick, onUpdateTask, onDragStart, expandedTasks, toggleTaskExpand, groupByProject }) => {
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editedTitle, setEditedTitle] = useState(task.title);
 
@@ -831,12 +927,25 @@ const KanbanCard: React.FC<{
       className="bg-[var(--background)] p-4 rounded-2xl border border-[var(--border)] shadow-sm hover:shadow-xl hover:border-[var(--primary)]/30 transition-all cursor-pointer group active:cursor-grabbing active:scale-95"
     >
       <div className="flex justify-between items-start mb-3">
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1.5 min-w-0">
           <StatusSelector
             status={task.status}
             onSelect={(status) => onUpdateTask({ ...task, status })}
             compact
           />
+          {groupByProject === false && project && (
+            <span
+              className="text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-md border flex items-center gap-1.5 ml-1 overflow-hidden"
+              style={{
+                backgroundColor: `${project.color}15`,
+                color: project.color,
+                borderColor: `${project.color}30`
+              }}
+            >
+              <div className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: project.color }} />
+              <span className="truncate max-w-[100px]">{project.name}</span>
+            </span>
+          )}
         </div>
         {task.priority !== 'none' && (
           <Badge variant={
