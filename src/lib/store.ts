@@ -23,6 +23,7 @@ export interface Subtask {
   timeSpent: number; // seconds
   isToday?: boolean;
   todayOrder?: number;
+  orderIndex?: number;
 }
 
 export interface Task {

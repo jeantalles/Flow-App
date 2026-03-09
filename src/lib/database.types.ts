@@ -61,6 +61,7 @@ export type Database = {
           time_spent: number
           title: string
           today_order: number | null
+          order_index: number | null
         }
         Insert: {
           assignee_id?: string | null
@@ -75,6 +76,7 @@ export type Database = {
           time_spent?: number
           title: string
           today_order?: number | null
+          order_index?: number | null
         }
         Update: {
           assignee_id?: string | null

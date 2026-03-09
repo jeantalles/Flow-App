@@ -38,6 +38,7 @@ const mapSubtask = (dbSubtask: DbSubtask): Subtask => ({
     timeSpent: dbSubtask.time_spent,
     isToday: dbSubtask.is_today || undefined,
     todayOrder: dbSubtask.today_order ?? undefined,
+    orderIndex: dbSubtask.order_index ?? undefined,
 });
 
 export const api = {
@@ -96,7 +97,7 @@ export const api = {
             const { data, error } = await supabase.from('tasks').select(`
         *,
         subtasks (*)
-      `);
+      `).order('order_index', { foreignTable: 'subtasks', ascending: true });
 
             if (error) throw error;
 
@@ -187,7 +188,8 @@ export const api = {
                 assignee_id: subtask.assigneeId,
                 description: subtask.description,
                 is_today: subtask.isToday,
-                today_order: subtask.todayOrder
+                today_order: subtask.todayOrder,
+                order_index: subtask.orderIndex
             }).select().single();
             if (error) throw error;
             return mapSubtask(data);
@@ -202,6 +204,7 @@ export const api = {
             if (updates.description !== undefined) dbUpdates.description = updates.description;
             if (updates.isToday !== undefined) dbUpdates.is_today = updates.isToday;
             if (updates.todayOrder !== undefined) dbUpdates.today_order = updates.todayOrder;
+            if (updates.orderIndex !== undefined) dbUpdates.order_index = updates.orderIndex;
             if (updates.timeSpent !== undefined) dbUpdates.time_spent = updates.timeSpent;
 
             const { error } = await supabase.from('subtasks').update(dbUpdates).eq('id', id);

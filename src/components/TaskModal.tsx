@@ -173,7 +173,8 @@ export function TaskModal({
       id: Math.random().toString(36).substr(2, 9),
       title: newSubtaskTitle,
       completed: false,
-      timeSpent: 0
+      timeSpent: 0,
+      orderIndex: editedTask.subtasks.length
     };
     setEditedTask({
       ...editedTask,
@@ -269,6 +270,19 @@ export function TaskModal({
                   onSelect={(status) => setEditedTask({ ...editedTask, status })}
                   showLabel
                 />
+                <button
+                  onClick={() => setEditedTask({ ...editedTask, isToday: !editedTask.isToday })}
+                  className={cn(
+                    "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all border",
+                    editedTask.isToday
+                      ? "bg-amber-100 text-amber-600 border-amber-300 hover:bg-amber-200"
+                      : "bg-[var(--muted)]/50 text-[var(--muted-foreground)] border-[var(--border)] hover:bg-[var(--muted)] hover:text-amber-500"
+                  )}
+                  title={editedTask.isToday ? "Remover do Hoje" : "Focar Hoje"}
+                >
+                  <Zap size={14} className={editedTask.isToday ? "fill-amber-500" : ""} />
+                  {editedTask.isToday ? "Hoje" : "Focar Hoje"}
+                </button>
               </div>
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2">
@@ -422,7 +436,7 @@ export function TaskModal({
                   <Reorder.Group
                     axis="y"
                     values={editedTask.subtasks}
-                    onReorder={(newSubtasks) => setEditedTask({ ...editedTask, subtasks: newSubtasks })}
+                    onReorder={(newSubtasks) => setEditedTask({ ...editedTask, subtasks: newSubtasks.map((st, i) => ({ ...st, orderIndex: i })) })}
                     className="space-y-3"
                   >
                     {editedTask.subtasks.map(st => (
@@ -577,6 +591,18 @@ const SubtaskItem: React.FC<SubtaskItemProps> = ({
           onSelect={(userId) => onUpdate({ assigneeId: userId })}
         />
         <button
+          onClick={(e) => { e.stopPropagation(); onUpdate({ isToday: !subtask.isToday }); }}
+          className={cn(
+            "p-1 rounded transition-all",
+            subtask.isToday
+              ? "text-amber-500 opacity-100"
+              : "opacity-0 group-hover:opacity-100 text-[var(--muted-foreground)] hover:text-amber-500"
+          )}
+          title={subtask.isToday ? "Remover do Hoje" : "Focar Hoje"}
+        >
+          <Zap size={16} className={subtask.isToday ? "fill-amber-500" : ""} />
+        </button>
+        <button
           onClick={(e) => { e.stopPropagation(); onDelete(); }}
           className="opacity-0 group-hover:opacity-100 text-red-500 hover:text-red-600 transition-opacity p-1"
         >
@@ -696,6 +722,19 @@ function SubtaskView({
           )}>
             {editedSubtask.completed ? "Concluído" : "A Fazer"}
           </div>
+          <button
+            onClick={() => setEditedSubtask({ ...editedSubtask, isToday: !editedSubtask.isToday })}
+            className={cn(
+              "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all border",
+              editedSubtask.isToday
+                ? "bg-amber-100 text-amber-600 border-amber-300 hover:bg-amber-200"
+                : "bg-[var(--muted)]/50 text-[var(--muted-foreground)] border-[var(--border)] hover:bg-[var(--muted)] hover:text-amber-500"
+            )}
+            title={editedSubtask.isToday ? "Remover do Hoje" : "Focar Hoje"}
+          >
+            <Zap size={14} className={editedSubtask.isToday ? "fill-amber-500" : ""} />
+            {editedSubtask.isToday ? "Hoje" : "Focar Hoje"}
+          </button>
         </div>
         <div className="flex items-center gap-4">
           {isEditingTime ? (

@@ -449,7 +449,8 @@ const TaskRow: React.FC<{
       id: uuidv4(),
       title: 'Nova Subtarefa',
       completed: false,
-      timeSpent: 0
+      timeSpent: 0,
+      orderIndex: task.subtasks.length
     };
     onUpdateTask({ ...task, subtasks: [...task.subtasks, newSubtask] });
   };

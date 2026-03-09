@@ -207,7 +207,7 @@ export default function App() {
 
         // Duplicate subtasks if any
         if (t.subtasks && t.subtasks.length > 0) {
-          const newSubtasks = await Promise.all(t.subtasks.map(st =>
+          const newSubtasks = await Promise.all(t.subtasks.map((st, i) =>
             api.subtasks.create(newTask.id, {
               title: st.title,
               completed: st.completed,
@@ -216,7 +216,8 @@ export default function App() {
               assigneeId: st.assigneeId,
               description: st.description,
               isToday: st.isToday,
-              timeSpent: 0
+              timeSpent: 0,
+              orderIndex: st.orderIndex ?? i
             })
           ));
           newTask.subtasks = newSubtasks;
@@ -318,7 +319,7 @@ export default function App() {
 
       // Se houver subtarefas criadas na tela de 'nova tarefa' (salvas na memória)
       if (task.subtasks && task.subtasks.length > 0) {
-        const createdSubtasks = await Promise.all(task.subtasks.map(st =>
+        const createdSubtasks = await Promise.all(task.subtasks.map((st, i) =>
           api.subtasks.create(newTask.id, {
             title: st.title,
             completed: st.completed,
@@ -327,7 +328,8 @@ export default function App() {
             assigneeId: st.assigneeId,
             description: st.description,
             isToday: st.isToday,
-            timeSpent: st.timeSpent || 0
+            timeSpent: st.timeSpent || 0,
+            orderIndex: st.orderIndex ?? i
           })
         ));
         newTask.subtasks = createdSubtasks;
@@ -387,7 +389,8 @@ export default function App() {
               assigneeId: st.assigneeId,
               description: st.description,
               isToday: st.isToday,
-              timeSpent: st.timeSpent || 0
+              timeSpent: st.timeSpent || 0,
+              orderIndex: st.orderIndex
             });
           } else {
             await api.subtasks.update(st.id, {
@@ -398,7 +401,8 @@ export default function App() {
               assigneeId: st.assigneeId,
               description: st.description,
               isToday: st.isToday,
-              timeSpent: st.timeSpent
+              timeSpent: st.timeSpent,
+              orderIndex: st.orderIndex
             });
           }
         }));
