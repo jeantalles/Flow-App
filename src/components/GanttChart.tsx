@@ -44,23 +44,26 @@ export function GanttChart({ tasks, projects, onTaskClick, onUpdateTask, users }
   const handlePrev = () => setCurrentDate(addDays(currentDate, viewMode === 'days' ? -30 : -90));
   const handleNext = () => setCurrentDate(addDays(currentDate, viewMode === 'days' ? 30 : 90));
 
-  // Group tasks by project
-  const tasksByProject = projects.map(project => ({
-    project,
-    tasks: tasks.filter(t => t.projectId === project.id && !t.deletedAt)
-  })).filter(g => g.tasks.length > 0);
+  // Group tasks by project - memoized for performance
+  const tasksByProject = React.useMemo(() => {
+    const grouped = projects.map(project => ({
+      project,
+      tasks: tasks.filter(t => t.projectId === project.id && !t.deletedAt)
+    })).filter(g => g.tasks.length > 0);
 
-  const orphanedTasks = tasks.filter(t => !t.projectId && !t.deletedAt);
-  if (orphanedTasks.length > 0) {
-    tasksByProject.push({
-      project: {
-        id: 'no-project',
-        name: 'Sem Projeto',
-        color: '#64748b'
-      } as Project,
-      tasks: orphanedTasks
-    });
-  }
+    const orphanedTasks = tasks.filter(t => !t.projectId && !t.deletedAt);
+    if (orphanedTasks.length > 0) {
+      grouped.push({
+        project: {
+          id: 'no-project',
+          name: 'Sem Projeto',
+          color: '#64748b'
+        } as Project,
+        tasks: orphanedTasks
+      });
+    }
+    return grouped;
+  }, [tasks, projects]);
 
   const toggleTaskExpand = (taskId: string) => {
     setExpandedTasks(prev => ({ ...prev, [taskId]: !prev[taskId] }));
@@ -148,7 +151,10 @@ export function GanttChart({ tasks, projects, onTaskClick, onUpdateTask, users }
     const handleWheel = (e: WheelEvent) => {
       if (e.shiftKey) {
         e.preventDefault();
-        container.scrollLeft += e.deltaY || e.deltaX;
+        // Speed up the scroll and prefer deltaY as it's the vertical scroll redirected
+        // Using a small multiplier for snappier feel on mouse wheels
+        const scrollDelta = (Math.abs(e.deltaX) > Math.abs(e.deltaY)) ? e.deltaX : e.deltaY;
+        container.scrollLeft += scrollDelta * 1.5;
       }
     };
 
@@ -252,8 +258,35 @@ export function GanttChart({ tasks, projects, onTaskClick, onUpdateTask, users }
       </div>
 
       {/* Chart Area */}
-      <div className="flex-1 overflow-auto relative scroll-smooth" ref={containerRef}>
-        <div style={{ minWidth: (viewMode === 'days' ? days.length : weekUnits.length) * unitWidth + 300 }} className="pb-6">
+      <div className="flex-1 overflow-auto relative" ref={containerRef}>
+        <div style={{ minWidth: (viewMode === 'days' ? days.length : weekUnits.length) * unitWidth + 300 }} className="pb-6 relative">
+          {/* Background Grid - Rendered once for high performance */}
+          <div className="absolute inset-x-0 top-24 bottom-0 pointer-events-none flex z-0">
+            <div className="w-80 shrink-0 border-r border-[var(--border)] bg-[var(--background)]/50" />
+            <div className="flex-1 flex relative">
+              {(viewMode === 'days' ? days : weekUnits).map(unit => {
+                const isToday = viewMode === 'days' && isSameDay(unit, new Date());
+                const isThisWeek = viewMode === 'weeks' && (new Date() >= unit && new Date() <= endOfWeek(unit, { weekStartsOn: 1 }));
+                const isWeekendDay = viewMode === 'days' && isWeekend(unit);
+
+                return (
+                  <div
+                    key={unit.toISOString()}
+                    className={cn(
+                      "flex-shrink-0 border-r border-[var(--border)] h-full transition-colors",
+                      (isToday || isThisWeek) && "bg-blue-500/[0.04] dark:bg-blue-500/[0.08]",
+                      isWeekendDay && "bg-slate-200/40 dark:bg-slate-800/40"
+                    )}
+                    style={{
+                      width: unitWidth,
+                      borderLeft: isToday ? '1px solid rgba(59, 130, 246, 0.2)' : undefined,
+                      borderRight: isToday ? '1px solid rgba(59, 130, 246, 0.2)' : undefined
+                    }}
+                  />
+                );
+              })}
+            </div>
+          </div>
           {/* Header Rows */}
           <div className="flex sticky top-0 z-30 bg-[var(--background)]">
             {/* Sidebar header - spanning both tiers */}
@@ -351,29 +384,7 @@ export function GanttChart({ tasks, projects, onTaskClick, onUpdateTask, users }
                   </div>
 
                   <div className="flex-1 relative h-full">
-                    {/* Grid Lines */}
-                    {(viewMode === 'days' ? days : weekUnits).map(unit => {
-                      const isToday = viewMode === 'days' && isSameDay(unit, new Date());
-                      const isThisWeek = viewMode === 'weeks' && (new Date() >= unit && new Date() <= endOfWeek(unit, { weekStartsOn: 1 }));
-                      const isWeekendDay = viewMode === 'days' && isWeekend(unit);
-
-                      return (
-                        <div
-                          key={unit.toISOString()}
-                          className={cn(
-                            "flex-shrink-0 border-r border-[var(--border)] h-full absolute top-0 bottom-0 transition-colors",
-                            (isToday || isThisWeek) && "bg-blue-500/[0.08] dark:bg-blue-500/[0.12] z-0",
-                            isWeekendDay && "bg-slate-200/40 dark:bg-slate-800/40"
-                          )}
-                          style={{
-                            left: (viewMode === 'days' ? differenceInDays(unit, startDate) : differenceInDays(unit, startDate) / 7) * unitWidth,
-                            width: unitWidth,
-                            borderLeft: isToday ? '2px solid rgba(59, 130, 246, 0.3)' : undefined,
-                            borderRight: isToday ? '2px solid rgba(59, 130, 246, 0.3)' : undefined
-                          }}
-                        />
-                      );
-                    })}
+                    {/* Grid lines removed here, now using background grid */}
 
                     {project.deadline && (
                       <div
@@ -445,28 +456,7 @@ export function GanttChart({ tasks, projects, onTaskClick, onUpdateTask, users }
                         </div>
 
                         <div className="flex-1 flex relative h-full">
-                          {(viewMode === 'days' ? days : weekUnits).map(unit => {
-                            const isTodayCol = viewMode === 'days' && isSameDay(unit, new Date());
-                            const isThisWeekCol = viewMode === 'weeks' && (new Date() >= unit && new Date() <= endOfWeek(unit, { weekStartsOn: 1 }));
-                            const isWeekendCol = viewMode === 'days' && isWeekend(unit);
-
-                            return (
-                              <div
-                                key={unit.toISOString()}
-                                className={cn(
-                                  "flex-shrink-0 border-r border-[var(--border)] h-full absolute top-0 bottom-0",
-                                  (isTodayCol || isThisWeekCol) && "bg-blue-500/[0.08] dark:bg-blue-500/[0.12] z-0",
-                                  isWeekendCol && "bg-slate-200/40 dark:bg-slate-800/40"
-                                )}
-                                style={{
-                                  left: (viewMode === 'days' ? differenceInDays(unit, startDate) : differenceInDays(unit, startDate) / 7) * unitWidth,
-                                  width: unitWidth,
-                                  borderLeft: isTodayCol ? '2px solid rgba(59, 130, 246, 0.3)' : undefined,
-                                  borderRight: isTodayCol ? '2px solid rgba(59, 130, 246, 0.3)' : undefined
-                                }}
-                              />
-                            );
-                          })}
+                          {/* Grid lines removed here, now using background grid */}
 
                           <GanttBar
                             title={task.title}
@@ -531,28 +521,7 @@ export function GanttChart({ tasks, projects, onTaskClick, onUpdateTask, users }
                             </div>
 
                             <div className="flex-1 flex relative h-full">
-                              {(viewMode === 'days' ? days : weekUnits).map(unit => {
-                                const isT = viewMode === 'days' && isSameDay(unit, new Date());
-                                const isW = viewMode === 'weeks' && (new Date() >= unit && new Date() <= endOfWeek(unit, { weekStartsOn: 1 }));
-                                const isEnd = viewMode === 'days' && isWeekend(unit);
-
-                                return (
-                                  <div
-                                    key={unit.toISOString()}
-                                    className={cn(
-                                      "flex-shrink-0 border-r border-[var(--border)] h-full absolute top-0 bottom-0",
-                                      (isT || isW) && "bg-blue-500/[0.08] dark:bg-blue-500/[0.12] z-0",
-                                      isEnd && "bg-slate-200/40 dark:bg-slate-800/40"
-                                    )}
-                                    style={{
-                                      left: (viewMode === 'days' ? differenceInDays(unit, startDate) : differenceInDays(unit, startDate) / 7) * unitWidth,
-                                      width: unitWidth,
-                                      borderLeft: isT ? '2px solid rgba(59, 130, 246, 0.3)' : undefined,
-                                      borderRight: isT ? '2px solid rgba(59, 130, 246, 0.3)' : undefined
-                                    }}
-                                  />
-                                );
-                              })}
+                              {/* Grid lines removed here, now using background grid */}
 
                               <GanttBar
                                 title={subtask.title}
