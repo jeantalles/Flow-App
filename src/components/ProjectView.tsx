@@ -37,6 +37,7 @@ interface ProjectViewProps {
   onDeleteTask: (taskId: string) => void;
   onEditProject: (project: Project) => void;
   onSaveNewTask: (task: Task) => Promise<void>;
+  currentUser: User;
 }
 
 export function ProjectView({
@@ -51,7 +52,8 @@ export function ProjectView({
   onTaskClick,
   onDeleteTask,
   onEditProject,
-  onSaveNewTask
+  onSaveNewTask,
+  currentUser
 }: ProjectViewProps) {
   const [expandedTasks, setExpandedTasks] = useState<Record<string, boolean>>({});
   const [showCompletedTasks, setShowCompletedTasks] = useState<boolean>(true);
@@ -323,6 +325,7 @@ export function ProjectView({
                                     onDeleteTask={onDeleteTask}
                                     isExpanded={expandedTasks[task.id]}
                                     toggleExpand={() => toggleTaskExpand(task.id)}
+                                    currentUser={currentUser}
                                   />
                                 ))}
                               </div>
@@ -350,6 +353,7 @@ export function ProjectView({
                                     onDeleteTask={onDeleteTask}
                                     isExpanded={expandedTasks[task.id]}
                                     toggleExpand={() => toggleTaskExpand(task.id)}
+                                    currentUser={currentUser}
                                   />
                                 ))}
                               </div>
@@ -370,6 +374,7 @@ export function ProjectView({
                             onDeleteTask={onDeleteTask}
                             isExpanded={expandedTasks[task.id]}
                             toggleExpand={() => toggleTaskExpand(task.id)}
+                            currentUser={currentUser}
                           />
                         ))}
                       </div>
@@ -489,8 +494,9 @@ const TaskRow: React.FC<{
   onUpdateTask: (t: Task) => void,
   onDeleteTask: (id: string) => void,
   isExpanded: boolean,
-  toggleExpand: () => void
-}> = ({ task, users, project, onClick, onUpdateTask, onDeleteTask, isExpanded, toggleExpand }) => {
+  toggleExpand: () => void,
+  currentUser: User
+}> = ({ task, users, project, onClick, onUpdateTask, onDeleteTask, isExpanded, toggleExpand, currentUser }) => {
   const [showOptionsMenu, setShowOptionsMenu] = useState(false);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editedTitle, setEditedTitle] = useState(task.title);
@@ -501,7 +507,8 @@ const TaskRow: React.FC<{
       title: 'Nova Subtarefa',
       completed: false,
       timeSpent: 0,
-      orderIndex: task.subtasks.length
+      orderIndex: task.subtasks.length,
+      assigneeId: currentUser.id
     };
     onUpdateTask({ ...task, subtasks: [...task.subtasks, newSubtask] });
   };

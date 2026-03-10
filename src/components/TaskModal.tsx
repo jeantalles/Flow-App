@@ -40,6 +40,7 @@ interface TaskModalProps {
   onResumeTimer: () => void;
   onStopTimer: () => void;
   initialSubtaskId?: string | null;
+  currentUser: User;
 }
 
 export function TaskModal({
@@ -57,7 +58,8 @@ export function TaskModal({
   onPauseTimer,
   onResumeTimer,
   onStopTimer,
-  initialSubtaskId
+  initialSubtaskId,
+  currentUser
 }: TaskModalProps) {
   const [editedTask, setEditedTask] = useState<Task>(task);
   const [elapsed, setElapsed] = useState(0);
@@ -174,7 +176,8 @@ export function TaskModal({
       title: newSubtaskTitle,
       completed: false,
       timeSpent: 0,
-      orderIndex: editedTask.subtasks.length
+      orderIndex: editedTask.subtasks.length,
+      assigneeId: currentUser.id
     };
     setEditedTask({
       ...editedTask,
@@ -719,12 +722,6 @@ function SubtaskView({
             <ArrowLeft size={18} className="group-hover/back:-translate-x-0.5 transition-transform" />
             <span className="text-sm font-medium">Tarefa: {parentTaskTitle}</span>
           </button>
-          <div className={cn(
-            "flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase",
-            editedSubtask.completed ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-600"
-          )}>
-            {editedSubtask.completed ? "Concluído" : "A Fazer"}
-          </div>
           <button
             onClick={() => setEditedSubtask({ ...editedSubtask, isToday: !editedSubtask.isToday })}
             className={cn(

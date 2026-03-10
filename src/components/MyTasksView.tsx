@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Project, Task, User, Subtask } from '@/lib/store';
+import { Project, Task, User, Subtask, ActiveTimer } from '@/lib/store';
 import {
   CheckSquare,
   Plus,
@@ -19,7 +19,9 @@ import {
   GripVertical,
   Kanban,
   Eye,
-  EyeOff
+  EyeOff,
+  Play,
+  Pause
 } from 'lucide-react';
 import { cn, formatDuration } from '@/lib/utils';
 import { motion, AnimatePresence, Reorder } from 'motion/react';
@@ -37,6 +39,11 @@ interface MyTasksViewProps {
   onSaveNewTask: (task: Task) => Promise<void>;
   onDeleteTask: (taskId: string) => void;
   onUpdateTasksOrder: (updates: { id: string, type: 'task' | 'subtask', todayOrder: number, parentTaskId?: string }[]) => void;
+  activeTimer: ActiveTimer | null;
+  onStartTimer: (taskId: string, subtaskId?: string) => void;
+  onPauseTimer: () => void;
+  onResumeTimer: () => void;
+  onStopTimer: () => void;
 }
 
 export function MyTasksView({
@@ -48,7 +55,12 @@ export function MyTasksView({
   onCreateTask,
   onSaveNewTask,
   onDeleteTask,
-  onUpdateTasksOrder
+  onUpdateTasksOrder,
+  activeTimer,
+  onStartTimer,
+  onPauseTimer,
+  onResumeTimer,
+  onStopTimer
 }: MyTasksViewProps) {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [expandedTasks, setExpandedTasks] = useState<Record<string, boolean>>({});
@@ -282,6 +294,10 @@ export function MyTasksView({
                         }
                       }}
                       viewMode={viewMode}
+                      activeTimer={activeTimer}
+                      onStartTimer={onStartTimer}
+                      onPauseTimer={onPauseTimer}
+                      onResumeTimer={onResumeTimer}
                     />
                   </Reorder.Item>
                 ))}
@@ -775,18 +791,45 @@ const InlineTaskInput: React.FC<{
   );
 };
 
-function TodayTaskCard({ item, project, onClick, onRemove, onUpdate, viewMode }: {
+function TodayTaskCard({ item, project, onClick, onRemove, onUpdate, viewMode, activeTimer, onStartTimer, onPauseTimer, onResumeTimer }: {
   item: any,
   project?: Project,
   onClick: () => void,
   onRemove: () => void,
   onUpdate: (item: any) => void,
-  viewMode: 'grid' | 'list'
+  viewMode: 'grid' | 'list',
+  activeTimer: ActiveTimer | null,
+  onStartTimer: (taskId: string, subtaskId?: string) => void,
+  onPauseTimer: () => void,
+  onResumeTimer: () => void
 }) {
+  const isDragging = React.useRef(false);
   const isSubtask = item.type === 'subtask';
   const status = isSubtask ? (item.completed ? 'done' : 'todo') : item.status;
   const title = item.title;
   const endDate = item.endDate;
+
+  const currentTaskId = isSubtask ? item.parentTask.id : item.id;
+  const currentSubtaskId = isSubtask ? item.id : undefined;
+
+  const isRunning = activeTimer?.taskId === currentTaskId &&
+    activeTimer?.subtaskId === currentSubtaskId &&
+    !!activeTimer?.startTime;
+
+  const isPaused = activeTimer?.taskId === currentTaskId &&
+    activeTimer?.subtaskId === currentSubtaskId &&
+    !activeTimer?.startTime;
+
+  const handleToggleTimer = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (isRunning) {
+      onPauseTimer();
+    } else if (isPaused) {
+      onResumeTimer();
+    } else {
+      onStartTimer(currentTaskId, currentSubtaskId);
+    }
+  };
 
   return (
     <div
@@ -794,13 +837,10 @@ function TodayTaskCard({ item, project, onClick, onRemove, onUpdate, viewMode }:
         "bg-[#FFFFFF] border border-[var(--border)] rounded-2xl p-6 shadow-sm hover:shadow-md transition-all cursor-pointer group relative overflow-hidden",
         viewMode === 'list' && "flex items-center gap-6 py-4"
       )}
-      onClick={onClick}
+      onPointerDown={() => { isDragging.current = false; }}
+      onPointerMove={() => { isDragging.current = true; }}
+      onClick={() => { if (!isDragging.current) onClick(); }}
     >
-      {/* Drag Handle */}
-      <div className="absolute left-3 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity text-[var(--muted-foreground)] cursor-grab active:cursor-grabbing">
-        <GripVertical size={20} />
-      </div>
-
       {/* Project Color Strip */}
       <div
         className="absolute left-0 top-0 bottom-0 w-1.5"
@@ -827,13 +867,25 @@ function TodayTaskCard({ item, project, onClick, onRemove, onUpdate, viewMode }:
               </span>
             )}
           </div>
-          <button
-            onClick={(e) => { e.stopPropagation(); onRemove(); }}
-            className="p-1.5 rounded-full hover:bg-amber-100 text-amber-500 transition-colors"
-            title="Remover de hoje"
-          >
-            <Zap size={16} fill="currentColor" />
-          </button>
+          <div className="flex items-center gap-1.5 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+            <button
+              onClick={handleToggleTimer}
+              className={cn(
+                "p-2 rounded-full transition-all",
+                (isRunning || isPaused) ? "bg-blue-100 text-blue-600" : "hover:bg-blue-50 text-blue-500"
+              )}
+              title={isRunning ? "Pausar" : "Iniciar cronômetro"}
+            >
+              {isRunning ? <Pause size={22} /> : <Play size={22} />}
+            </button>
+            <button
+              onClick={(e) => { e.stopPropagation(); onRemove(); }}
+              className="p-2 rounded-full hover:bg-amber-100 text-amber-500 transition-colors"
+              title="Remover de hoje"
+            >
+              <Zap size={22} fill="currentColor" />
+            </button>
+          </div>
         </div>
         <div className="flex items-start gap-4 mb-2">
           <button

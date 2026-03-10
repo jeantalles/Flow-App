@@ -665,6 +665,7 @@ export default function App() {
               setProjectToEdit(project);
               setIsProjectModalOpen(true);
             }}
+            currentUser={currentUser}
           />
         )}
 
@@ -722,6 +723,11 @@ export default function App() {
             onSaveNewTask={handleSaveNewTask}
             onDeleteTask={handleDeleteTask}
             onUpdateTasksOrder={handleUpdateTasksOrder}
+            activeTimer={activeTimer}
+            onStartTimer={handleStartTimer}
+            onPauseTimer={handlePauseTimer}
+            onResumeTimer={handleResumeTimer}
+            onStopTimer={handleStopTimer}
           />
         )}
         {currentView === 'weekly' && (
@@ -759,6 +765,7 @@ export default function App() {
           onResumeTimer={handleResumeTimer}
           onStopTimer={handleStopTimer}
           initialSubtaskId={initialSubtaskId}
+          currentUser={currentUser}
         />
       )}
 
