@@ -225,7 +225,7 @@ export function GanttChart({ tasks, projects, onTaskClick, onUpdateTask, users }
               onClick={() => setViewMode('days')}
               className={cn(
                 "px-3 py-1.5 text-[10px] font-black uppercase tracking-widest rounded-md transition-all",
-                viewMode === 'days' ? "bg-blue-600 text-white shadow-md" : "text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:bg-[var(--accent)]"
+                viewMode === 'days' ? "bg-[#165DFC] text-white shadow-md" : "text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:bg-[var(--accent)]"
               )}
             >
               Dias
@@ -234,7 +234,7 @@ export function GanttChart({ tasks, projects, onTaskClick, onUpdateTask, users }
               onClick={() => setViewMode('weeks')}
               className={cn(
                 "px-3 py-1.5 text-[10px] font-black uppercase tracking-widest rounded-md transition-all",
-                viewMode === 'weeks' ? "bg-blue-600 text-white shadow-md" : "text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:bg-[var(--accent)]"
+                viewMode === 'weeks' ? "bg-[#165DFC] text-white shadow-md" : "text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:bg-[var(--accent)]"
               )}
             >
               Semanas
@@ -274,7 +274,7 @@ export function GanttChart({ tasks, projects, onTaskClick, onUpdateTask, users }
                     key={unit.toISOString()}
                     className={cn(
                       "flex-shrink-0 border-r border-[var(--border)] h-full transition-colors",
-                      (isToday || isThisWeek) && "bg-blue-500/[0.04] dark:bg-blue-500/[0.08]",
+                      (isToday || isThisWeek) && "bg-[#165DFC]/[0.04] dark:bg-[#165DFC]/[0.08]",
                       isWeekendDay && "bg-slate-200/40 dark:bg-slate-800/40"
                     )}
                     style={{
@@ -318,18 +318,18 @@ export function GanttChart({ tasks, projects, onTaskClick, onUpdateTask, users }
                       key={day.toISOString()}
                       className={cn(
                         "flex-shrink-0 text-center py-1 border-r border-[var(--border)] text-xs flex flex-col justify-center transition-colors h-full relative overflow-hidden",
-                        isSameDay(day, new Date()) && "bg-blue-500/10 dark:bg-blue-500/20",
+                        isSameDay(day, new Date()) && "bg-[#165DFC]/10",
                         isWeekend(day) && "bg-slate-200/50 dark:bg-slate-800"
                       )}
                       style={{ width: unitWidth }}
                     >
-                      {isSameDay(day, new Date()) && <div className="absolute inset-x-0 bottom-0 h-1 bg-blue-500 z-10" />}
+                      {isSameDay(day, new Date()) && <div className="absolute inset-x-0 bottom-0 h-1 bg-[#165DFC] z-10" />}
                       <div className="text-[12px] uppercase font-bold tracking-tight leading-none mb-1 text-slate-500 dark:text-slate-400">
                         {format(day, 'EEEE', { locale: ptBR }).replace('-feira', '')}
                       </div>
                       <div className={cn(
                         "text-[16px] font-black leading-none",
-                        isSameDay(day, new Date()) ? "text-blue-600 scale-110" : "text-slate-900 dark:text-slate-100"
+                        isSameDay(day, new Date()) ? "text-[#165DFC] scale-110" : "text-slate-900 dark:text-slate-100"
                       )}>
                         {format(day, 'd')}
                       </div>
@@ -345,15 +345,15 @@ export function GanttChart({ tasks, projects, onTaskClick, onUpdateTask, users }
                         key={week.toISOString()}
                         className={cn(
                           "flex-shrink-0 text-center border-r border-[var(--border)] text-xs flex flex-col justify-center transition-colors h-full relative",
-                          isCurrentWeek && "bg-blue-500/10 dark:bg-blue-500/20"
+                          isCurrentWeek && "bg-[#165DFC]/10"
                         )}
                         style={{ width: unitWidth }}
                       >
-                        {isCurrentWeek && <div className="absolute inset-x-0 bottom-0 h-1 bg-blue-500 z-10" />}
+                        {isCurrentWeek && <div className="absolute inset-x-0 bottom-0 h-1 bg-[#165DFC] z-10" />}
                         <div className="text-[13px] uppercase font-bold tracking-widest leading-none mb-1.5 text-slate-500 dark:text-slate-400">Sem. {weekIndex}</div>
                         <div className={cn(
                           "text-[14px] font-black",
-                          isCurrentWeek ? "text-blue-600 scale-105" : "text-slate-900 dark:text-slate-100"
+                          isCurrentWeek ? "text-[#165DFC] scale-105" : "text-slate-900 dark:text-slate-100"
                         )}>
                           {format(week, 'd MMM', { locale: ptBR })}
                         </div>

@@ -232,7 +232,7 @@ export function MyTasksView({
       {/* Header */}
       <div className="p-8 pb-4 flex items-center justify-between max-w-7xl w-full">
         <div className="flex items-center gap-4">
-          <div className="p-3 bg-indigo-100 text-indigo-600 rounded-xl">
+          <div className="p-3 bg-[#EFF6FF] text-[#165DFC] rounded-xl">
             <CheckSquare size={32} />
           </div>
           <div>
@@ -412,7 +412,7 @@ export function MyTasksView({
                   projects={projects}
                   onTaskClick={onTaskClick}
                   onUpdateTask={onUpdateTask}
-                  color="bg-blue-500"
+                  color="bg-[#165DFC]"
                   onDragStart={handleDragStart}
                   onDragOver={handleDragOver}
                   onDrop={handleDrop}
@@ -872,7 +872,7 @@ function TodayTaskCard({ item, project, onClick, onRemove, onUpdate, viewMode, a
               onClick={handleToggleTimer}
               className={cn(
                 "p-2 rounded-full transition-all",
-                (isRunning || isPaused) ? "bg-blue-100 text-blue-600" : "hover:bg-blue-50 text-blue-500"
+                (isRunning || isPaused) ? "bg-[#EFF6FF] text-[#165DFC]" : "hover:bg-[#EFF6FF] text-[#165DFC]"
               )}
               title={isRunning ? "Pausar" : "Iniciar cronômetro"}
             >
@@ -903,7 +903,7 @@ function TodayTaskCard({ item, project, onClick, onRemove, onUpdate, viewMode, a
             <CheckCircle2 size={14} className="text-emerald-500 opacity-0 group-hover/check:opacity-100 transition-opacity" />
           </button>
           <h3 className={cn(
-            "text-3xl font-bold group-hover:text-[var(--primary)] transition-colors truncate pt-0.5",
+            "text-3xl font-bold transition-colors truncate pt-0.5",
             status === 'done' && "text-[var(--muted-foreground)]"
           )}>
             {title}

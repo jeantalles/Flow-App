@@ -112,7 +112,7 @@ export function WeeklyView({ currentUser }: WeeklyViewProps) {
             {/* Header */}
             <div className="flex items-center justify-between px-8 py-6 bg-[var(--sidebar)]/30 backdrop-blur-sm border-b border-[var(--border)] sticky top-0 z-10">
                 <div className="flex items-center gap-4">
-                    <div className="p-3 bg-indigo-600 rounded-xl text-white shadow-lg shadow-indigo-500/20">
+                    <div className="p-3 bg-[#165DFC] rounded-xl text-white shadow-lg shadow-[#165DFC]/20">
                         <CalendarIcon size={24} />
                     </div>
                     <div>
@@ -147,7 +147,7 @@ export function WeeklyView({ currentUser }: WeeklyViewProps) {
                         <Button
                             onClick={handleSave}
                             disabled={isSaving || isLoading}
-                            className="gap-2 bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-500/20 px-6 h-10 rounded-xl font-semibold transition-all hover:scale-[1.02] active:scale-[0.98]"
+                            className="gap-2 bg-[#165DFC] hover:bg-[#165DFC]/90 text-white shadow-lg shadow-[#165DFC]/20 px-6 h-10 rounded-xl font-semibold transition-all hover:scale-[1.02] active:scale-[0.98]"
                         >
                             {isSaving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
                             Salvar
@@ -162,13 +162,13 @@ export function WeeklyView({ currentUser }: WeeklyViewProps) {
                     {isLoading ? (
                         <div className="flex flex-col items-center justify-center h-full py-20 gap-6 text-[var(--muted-foreground)]">
                             <div className="relative">
-                                <Loader2 size={48} className="animate-spin text-indigo-500" />
-                                <div className="absolute inset-0 blur-xl bg-indigo-500/20 animate-pulse"></div>
+                                <Loader2 size={48} className="animate-spin text-[#165DFC]" />
+                                <div className="absolute inset-0 blur-xl bg-[#165DFC]/20 animate-pulse"></div>
                             </div>
                             <p className="font-medium animate-pulse">Organizando sua produtividade...</p>
                         </div>
                     ) : (
-                        <div className="prose prose-indigo dark:prose-invert max-w-none tiptap-weekly">
+                        <div className="prose prose-blue dark:prose-invert max-w-none tiptap-weekly">
                             <EditorContent editor={editor} />
                         </div>
                     )}
@@ -216,8 +216,8 @@ export function WeeklyView({ currentUser }: WeeklyViewProps) {
           background: transparent;
         }
         .tiptap-weekly .tiptap ul[data-type="taskList"] input[type="checkbox"]:checked {
-          background: #4f46e5;
-          border-color: #4f46e5;
+          background: #165DFC;
+          border-color: #165DFC;
         }
         .tiptap-weekly .tiptap ul[data-type="taskList"] input[type="checkbox"]:checked::after {
           content: '✓';

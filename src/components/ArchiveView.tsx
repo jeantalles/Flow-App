@@ -32,7 +32,7 @@ export function ArchiveView({
   return (
     <div className="flex flex-col h-full bg-[var(--background)] p-8 overflow-hidden">
       <div className="flex items-center gap-4 mb-8">
-        <div className="p-3 bg-indigo-100 text-indigo-600 rounded-xl">
+        <div className="p-3 bg-[#EFF6FF] text-[#165DFC] rounded-xl">
           <Archive size={32} />
         </div>
         <div>

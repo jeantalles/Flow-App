@@ -11,10 +11,11 @@ interface GlobalTimerProps {
   onStop: () => void;
   onPause: () => void;
   onResume: () => void;
-  onMaximize: (task: Task) => void;
+  onCancel: () => void;
+  onMaximize: (task: Task, subtaskId?: string) => void;
 }
 
-export function GlobalTimer({ activeTimer, tasks, projects, onStop, onPause, onResume, onMaximize }: GlobalTimerProps) {
+export function GlobalTimer({ activeTimer, tasks, projects, onStop, onPause, onResume, onCancel, onMaximize }: GlobalTimerProps) {
   const [elapsed, setElapsed] = useState(0);
   const [isFullScreen, setIsFullScreen] = useState(false);
 
@@ -77,7 +78,7 @@ export function GlobalTimer({ activeTimer, tasks, projects, onStop, onPause, onR
 
           <div className={cn(
             "text-[12rem] md:text-[16rem] font-mono font-black tabular-nums leading-none tracking-tighter",
-            isPaused ? "text-amber-500" : "text-indigo-600"
+            isPaused ? "text-amber-500" : "text-[#165DFC]"
           )}>
             {formatDuration(elapsed)}
           </div>
@@ -114,19 +115,34 @@ export function GlobalTimer({ activeTimer, tasks, projects, onStop, onPause, onR
   }
 
   return (
-    <div className="fixed bottom-6 right-6 z-[100] bg-[var(--background)] border border-[var(--border)] shadow-2xl rounded-2xl p-4 flex items-center gap-4 animate-in slide-in-from-bottom-10 fade-in duration-300 w-80">
-      <div className={cn(
-        "w-10 h-10 rounded-full flex items-center justify-center",
-        isPaused ? "bg-amber-100 text-amber-600" : "bg-indigo-100 text-indigo-600 animate-pulse"
-      )}>
-        <Hourglass size={20} />
-      </div>
+    <div
+      onClick={() => onMaximize(task, activeTimer.subtaskId)}
+      className="fixed bottom-6 right-6 z-[100] bg-[var(--background)] border border-[var(--border)] shadow-2xl rounded-2xl p-4 flex items-center gap-4 animate-in slide-in-from-bottom-10 fade-in duration-300 w-80 cursor-pointer hover:border-[var(--primary)] transition-all group"
+    >
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          onCancel();
+        }}
+        className={cn(
+          "relative w-10 h-10 rounded-full flex items-center justify-center shrink-0 overflow-hidden transition-all group/icon bg-[#F1F5F9] hover:bg-[#FEF2F2]",
+          isPaused ? "text-amber-600" : "text-[#165DFC] animate-pulse"
+        )}
+        title="Cancelar Cronômetro"
+      >
+        <div className="transition-all duration-200 group-hover/icon:scale-0 group-hover/icon:opacity-0">
+          <Hourglass size={20} />
+        </div>
+        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover/icon:opacity-100 text-red-600 transition-all duration-200 scale-50 group-hover/icon:scale-100">
+          <X size={20} />
+        </div>
+      </button>
 
       <div className="flex-1 min-w-0">
         <div className="text-xs font-medium text-[var(--muted-foreground)] uppercase tracking-wider">
           {isPaused ? 'Pausado' : 'Em andamento'}
         </div>
-        <div className="font-bold truncate text-sm text-[var(--foreground)]" title={task.title}>
+        <div className="font-bold truncate text-sm text-[var(--foreground)] group-hover:text-[var(--primary)] transition-colors" title={task.title}>
           {task.title}
         </div>
         {subtask && (
@@ -136,18 +152,18 @@ export function GlobalTimer({ activeTimer, tasks, projects, onStop, onPause, onR
         )}
         <div className={cn(
           "font-mono text-xl font-bold mt-1",
-          isPaused ? "text-amber-600" : "text-indigo-600"
+          isPaused ? "text-amber-600" : "text-[#165DFC]"
         )}>
           {formatDuration(elapsed)}
         </div>
       </div>
 
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-2" onClick={(e) => e.stopPropagation()}>
         <div className="flex gap-2">
           {isPaused ? (
             <button
               onClick={onResume}
-              className="p-2 bg-emerald-100 text-emerald-600 rounded-lg hover:bg-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:hover:bg-emerald-900/50 transition-colors"
+              className="p-2 text-[#165DFC] bg-[#F1F5F9] rounded-lg hover:bg-[#DBEAFE] transition-all hover:scale-105 active:scale-95"
               title="Retomar"
             >
               <Play size={16} fill="currentColor" />
@@ -155,7 +171,7 @@ export function GlobalTimer({ activeTimer, tasks, projects, onStop, onPause, onR
           ) : (
             <button
               onClick={onPause}
-              className="p-2 bg-amber-100 text-amber-600 rounded-lg hover:bg-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:hover:bg-amber-900/50 transition-colors"
+              className="p-2 text-[#165DFC] bg-[#F1F5F9] rounded-lg hover:bg-[#DBEAFE] transition-all hover:scale-105 active:scale-95"
               title="Pausar"
             >
               <Pause size={16} fill="currentColor" />
@@ -163,7 +179,7 @@ export function GlobalTimer({ activeTimer, tasks, projects, onStop, onPause, onR
           )}
           <button
             onClick={onStop}
-            className="p-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50 transition-colors"
+            className="p-2 text-red-600 bg-[#F1F5F9] rounded-full hover:bg-[#FEE2E2] transition-all hover:scale-105 active:scale-95"
             title="Finalizar"
           >
             <Square size={16} fill="currentColor" />
@@ -171,7 +187,7 @@ export function GlobalTimer({ activeTimer, tasks, projects, onStop, onPause, onR
         </div>
         <button
           onClick={() => setIsFullScreen(true)}
-          className="p-2 bg-[var(--muted)] text-[var(--muted-foreground)] rounded-lg hover:bg-[var(--accent)] transition-colors flex items-center justify-center"
+          className="p-2 text-[var(--muted-foreground)] bg-[#F1F5F9] rounded-lg hover:bg-[#F8FAFC] transition-colors flex items-center justify-center"
           title="Tela Cheia"
         >
           <Maximize2 size={16} />

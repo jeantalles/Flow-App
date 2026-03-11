@@ -81,7 +81,7 @@ export function SearchView({ projects, tasks, onTaskClick, onProjectClick }: Sea
                         <div className={cn(
                           "w-4 h-4 rounded-full border-2",
                           task.status === 'done' ? "bg-emerald-500 border-emerald-500" :
-                            task.status === 'in-progress' ? "border-blue-500" : "border-slate-300"
+                            task.status === 'in-progress' ? "border-[#165DFC]" : "border-slate-300"
                         )} />
                         <div className="flex-1">
                           <h3 className={cn("font-medium group-hover:text-[var(--primary)] transition-colors", task.status === 'done' && "text-[var(--muted-foreground)]")}>

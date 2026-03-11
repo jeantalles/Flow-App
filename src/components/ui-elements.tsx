@@ -247,7 +247,7 @@ export function StatusSelector({ status, onSelect, size = 'sm', showLabel = fals
 
   const statusConfig = {
     'todo': { label: 'A Fazer', dotClass: 'border-slate-300 text-transparent hover:border-slate-400', innerDot: false },
-    'in-progress': { label: 'Em Andamento', dotClass: 'border-blue-500 text-blue-500', innerDot: true },
+    'in-progress': { label: 'Em Andamento', dotClass: 'border-[#165DFC] text-[#165DFC]', innerDot: true },
     'done': { label: 'Concluído', dotClass: 'bg-emerald-500 border-emerald-500 text-white', innerDot: false },
   };
 
@@ -280,13 +280,13 @@ export function StatusSelector({ status, onSelect, size = 'sm', showLabel = fals
           current.dotClass
         )}>
           {status === 'done' && <CheckCircle2 size={compact ? 10 : (size === 'sm' ? 12 : 10)} />}
-          {status === 'in-progress' && <div className={cn("bg-blue-500 rounded-full", innerDotSize)} />}
+          {status === 'in-progress' && <div className={cn("bg-[#165DFC] rounded-full", innerDotSize)} />}
         </div>
         {showLabel && (
           <span className={cn(
             "font-medium text-sm",
             status === 'done' ? "text-emerald-600 dark:text-emerald-400" :
-              status === 'in-progress' ? "text-blue-600 dark:text-blue-400" :
+              status === 'in-progress' ? "text-[#165DFC] dark:text-[#60A5FA]" :
                 "text-[var(--muted-foreground)]"
           )}>
             {current.label}
@@ -319,8 +319,8 @@ export function StatusSelector({ status, onSelect, size = 'sm', showLabel = fals
               onClick={(e) => { e.stopPropagation(); onSelect('in-progress'); setShowMenu(false); }}
               className="w-full text-left px-3 py-2 text-xs hover:bg-[var(--accent)] flex items-center gap-2"
             >
-              <div className="w-3 h-3 rounded-full border-2 border-blue-500 flex items-center justify-center">
-                <div className="w-1.5 h-1.5 bg-blue-500 rounded-full" />
+              <div className="w-3 h-3 rounded-full border-2 border-[#165DFC] flex items-center justify-center">
+                <div className="w-1.5 h-1.5 bg-[#165DFC] rounded-full" />
               </div> Em Andamento
             </button>
             <button

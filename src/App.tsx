@@ -593,6 +593,10 @@ export default function App() {
     setActiveTimer(null);
   };
 
+  const handleCancelTimer = () => {
+    setActiveTimer(null);
+  };
+
   const activeProject = activeProjectId ? projects.find(p => p.id === activeProjectId) : undefined;
   // Filter out deleted and archived projects for sidebar
   const visibleProjects = projects.filter(p => !p.deletedAt && !p.archivedAt);
@@ -793,7 +797,11 @@ export default function App() {
         onStop={handleStopTimer}
         onPause={handlePauseTimer}
         onResume={handleResumeTimer}
-        onMaximize={setSelectedTask}
+        onCancel={handleCancelTimer}
+        onMaximize={(task, subtaskId) => {
+          setSelectedTask(task);
+          setInitialSubtaskId(subtaskId || null);
+        }}
       />
     </div>
   );

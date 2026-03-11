@@ -145,7 +145,7 @@ export function ProjectView({
                 </>
               ) : (
                 <>
-                  <div className="w-8 h-8 bg-indigo-100 text-indigo-600 rounded-lg flex items-center justify-center text-indigo-600">
+                  <div className="w-8 h-8 bg-[#EFF6FF] text-[#165DFC] rounded-lg flex items-center justify-center text-[#165DFC]">
                     <LayoutDashboardIcon size={20} />
                   </div>
                   <h1 className="text-2xl font-bold font-heading">Visão Geral</h1>
@@ -180,7 +180,7 @@ export function ProjectView({
       <div className="px-8 py-4 border-b border-[var(--border)] flex items-center gap-6 overflow-x-auto bg-[#FBFCFD]/50 backdrop-blur-sm">
         <Button
           onClick={() => onCreateTask(activeProjectId || undefined)}
-          className="gap-2 h-9 px-5 text-sm font-bold bg-blue-600 hover:bg-blue-700 text-white border-none shadow-md hover:shadow-lg transition-all rounded-xl"
+          className="gap-2 h-9 px-5 text-sm font-bold bg-[#165DFC] hover:bg-[#165DFC]/90 text-white border-none shadow-md hover:shadow-lg transition-all rounded-xl"
         >
           <Plus size={18} /> Nova Tarefa
         </Button>
@@ -271,7 +271,7 @@ export function ProjectView({
                     </span>
                     <button
                       onClick={() => setInlineCreating({ status: status as Task['status'], projectId: activeProjectId || undefined })}
-                      className="p-1.5 hover:bg-[var(--accent)] rounded-full text-[var(--muted-foreground)] hover:text-blue-500 transition-all opacity-0 group-hover/status-header:opacity-100 shadow-sm border border-transparent hover:border-[var(--border)]"
+                      className="p-1.5 hover:bg-[var(--accent)] rounded-full text-[var(--muted-foreground)] hover:text-[#165DFC] transition-all opacity-0 group-hover/status-header:opacity-100 shadow-sm border border-transparent hover:border-[var(--border)]"
                       title="Nova tarefa nesta etapa"
                     >
                       <Plus size={20} />
@@ -430,7 +430,7 @@ export function ProjectView({
               onTaskClick={onTaskClick}
               onUpdateTask={onUpdateTask}
               onCreateTask={() => onCreateTask(activeProjectId || undefined)}
-              color="bg-blue-500"
+              color="bg-[#165DFC]"
               onDragStart={handleDragStart}
               onDragOver={handleDragOver}
               onDrop={handleDrop}
@@ -650,7 +650,7 @@ const TaskRow: React.FC<{
             />
           ))}
 
-          <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); handleAddSubtask(); }} className="text-[var(--muted-foreground)] hover:text-[var(--primary)] hover:bg-blue-50/50 pl-0 h-9 font-bold text-xs transition-colors mt-1">
+          <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); handleAddSubtask(); }} className="text-[var(--muted-foreground)] hover:text-[var(--primary)] hover:bg-[#EFF6FF] pl-0 h-9 font-bold text-xs transition-colors mt-1">
             <Plus size={16} className="mr-1.5" /> Adicionar Subtarefa
           </Button>
         </div>
@@ -816,7 +816,7 @@ const KanbanColumn: React.FC<{
         {status === 'done' && setShowCompletedTasks ? (
           <button
             onClick={() => setShowCompletedTasks(!showCompletedTasks)}
-            className="text-[var(--muted-foreground)] hover:text-blue-500 p-1.5 hover:bg-[var(--accent)] rounded-lg transition-all transform hover:scale-110"
+            className="text-[var(--muted-foreground)] hover:text-[#165DFC] p-1.5 hover:bg-[var(--accent)] rounded-lg transition-all transform hover:scale-110"
             title={showCompletedTasks ? "Ocultar Concluídas" : "Mostrar Concluídas"}
           >
             {showCompletedTasks ? <Eye size={18} /> : <EyeOff size={18} />}
@@ -827,7 +827,7 @@ const KanbanColumn: React.FC<{
               setInlineCreating({ status: status as Task['status'], projectId: activeProjectId || projects[0]?.id });
               setInlineTitle('');
             }}
-            className="text-[var(--muted-foreground)] hover:text-blue-500 p-1.5 hover:bg-[var(--accent)] rounded-lg transition-all transform hover:scale-110"
+            className="text-[var(--muted-foreground)] hover:text-[#165DFC] p-1.5 hover:bg-[var(--accent)] rounded-lg transition-all transform hover:scale-110"
           >
             <Plus size={18} />
           </button>

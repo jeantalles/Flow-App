@@ -140,7 +140,7 @@ export function Sidebar({
             <Button
               className={cn(
                 "w-full justify-start gap-2 h-11",
-                currentView === 'search' ? "bg-[#E0E7FF] text-[#4F46E5] hover:bg-[#E0E7FF]" : "text-[var(--muted-foreground)]"
+                currentView === 'search' ? "bg-[#EFF6FF] text-[#165DFC] hover:bg-[#EFF6FF]" : "text-[var(--muted-foreground)]"
               )}
               variant="ghost"
               onClick={onOpenSearch}
@@ -151,7 +151,7 @@ export function Sidebar({
             <Button
               className={cn(
                 "w-full justify-start gap-2 h-11",
-                currentView === 'my-tasks' ? "bg-[#E0E7FF] text-[#4F46E5] hover:bg-[#E0E7FF]" : "text-[var(--muted-foreground)]"
+                currentView === 'my-tasks' ? "bg-[#EFF6FF] text-[#165DFC] hover:bg-[#EFF6FF]" : "text-[var(--muted-foreground)]"
               )}
               variant="ghost"
               onClick={onOpenMyTasks}
@@ -162,7 +162,7 @@ export function Sidebar({
             <Button
               className={cn(
                 "w-full justify-start gap-2 h-11",
-                currentView === 'project' && activeProjectId === null ? "bg-[#E0E7FF] text-[#4F46E5] hover:bg-[#E0E7FF]" : "text-[var(--muted-foreground)]"
+                currentView === 'project' && activeProjectId === null ? "bg-[#EFF6FF] text-[#165DFC] hover:bg-[#EFF6FF]" : "text-[var(--muted-foreground)]"
               )}
               variant="ghost"
               onClick={() => onSelectProject(null)}
@@ -173,7 +173,7 @@ export function Sidebar({
             <Button
               className={cn(
                 "w-full justify-start gap-2 h-11",
-                currentView === 'weekly' ? "bg-[#E0E7FF] text-[#4F46E5] hover:bg-[#E0E7FF]" : "text-[var(--muted-foreground)]"
+                currentView === 'weekly' ? "bg-[#EFF6FF] text-[#165DFC] hover:bg-[#EFF6FF]" : "text-[var(--muted-foreground)]"
               )}
               variant="ghost"
               onClick={onOpenWeekly}
@@ -184,7 +184,7 @@ export function Sidebar({
             <Button
               className={cn(
                 "w-full justify-start gap-2 h-11",
-                currentView === 'time-reports' ? "bg-[#E0E7FF] text-[#4F46E5] hover:bg-[#E0E7FF]" : "text-[var(--muted-foreground)]"
+                currentView === 'time-reports' ? "bg-[#EFF6FF] text-[#165DFC] hover:bg-[#EFF6FF]" : "text-[var(--muted-foreground)]"
               )}
               variant="ghost"
               onClick={onOpenTimeReports}
@@ -195,7 +195,7 @@ export function Sidebar({
             <Button
               className={cn(
                 "w-full justify-start gap-2 h-11",
-                currentView === 'trash' ? "bg-[#E0E7FF] text-[#4F46E5] hover:bg-[#E0E7FF]" : "text-[var(--muted-foreground)]"
+                currentView === 'trash' ? "bg-[#EFF6FF] text-[#165DFC] hover:bg-[#EFF6FF]" : "text-[var(--muted-foreground)]"
               )}
               variant="ghost"
               onClick={onOpenTrash}
@@ -229,7 +229,7 @@ export function Sidebar({
                   className={cn(
                     "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors focus:!outline-none focus:!ring-0",
                     currentView === 'project' && activeProjectId === project.id
-                      ? "bg-[#E0E7FF] text-[#4F46E5] font-semibold"
+                      ? "bg-[#EFF6FF] text-[#165DFC] font-semibold"
                       : "text-[var(--muted-foreground)] hover:bg-[var(--accent)]/50 hover:text-[var(--foreground)]"
                   )}
                 >
