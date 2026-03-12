@@ -240,6 +240,14 @@ export function TaskModal({
     currentTotalTime += elapsed;
   }
 
+  const todayStr = new Date().toLocaleDateString('en-CA');
+  const isTaskFocused = (() => {
+    if (editedTask.isToday === false) return false;
+    if (editedTask.isToday === true) return true;
+    if (!editedTask.endDate) return false;
+    return new Date(editedTask.endDate).toLocaleDateString('en-CA') <= todayStr;
+  })();
+
   return (
     <div
       className="fixed inset-0 z-[200] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
@@ -274,17 +282,17 @@ export function TaskModal({
                   showLabel
                 />
                 <button
-                  onClick={() => setEditedTask({ ...editedTask, isToday: !editedTask.isToday })}
+                  onClick={() => setEditedTask({ ...editedTask, isToday: !isTaskFocused })}
                   className={cn(
                     "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all border",
-                    editedTask.isToday
+                    isTaskFocused
                       ? "bg-amber-100 text-amber-600 border-amber-300 hover:bg-amber-200"
                       : "bg-[var(--muted)]/50 text-[var(--muted-foreground)] border-[var(--border)] hover:bg-[var(--muted)] hover:text-amber-500"
                   )}
-                  title={editedTask.isToday ? "Remover do Hoje" : "Focar Hoje"}
+                  title={isTaskFocused ? "Remover do Hoje" : "Focar Hoje"}
                 >
-                  <Zap size={14} className={editedTask.isToday ? "fill-amber-500" : ""} />
-                  {editedTask.isToday ? "Hoje" : "Focar Hoje"}
+                  <Zap size={14} className={isTaskFocused ? "fill-amber-500" : ""} />
+                  {isTaskFocused ? "Hoje" : "Focar Hoje"}
                 </button>
               </div>
               <div className="flex items-center gap-4">
@@ -533,6 +541,14 @@ const SubtaskItem: React.FC<SubtaskItemProps> = ({
     setIsRenaming(false);
   };
 
+  const todayStr = new Date().toLocaleDateString('en-CA');
+  const isSubtaskFocused = (() => {
+    if (subtask.isToday === false) return false;
+    if (subtask.isToday === true) return true;
+    if (!subtask.endDate) return false;
+    return new Date(subtask.endDate).toLocaleDateString('en-CA') <= todayStr;
+  })();
+
   return (
     <div
       className="flex items-center gap-3 group p-3 hover:bg-[var(--muted)]/30 rounded-lg transition-colors border border-[var(--border)] bg-[var(--background)] cursor-pointer"
@@ -588,16 +604,16 @@ const SubtaskItem: React.FC<SubtaskItemProps> = ({
       </div>
       <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
         <button
-          onClick={(e) => { e.stopPropagation(); onUpdate({ isToday: !subtask.isToday }); }}
+          onClick={(e) => { e.stopPropagation(); onUpdate({ isToday: !isSubtaskFocused }); }}
           className={cn(
             "p-1 rounded transition-all",
-            subtask.isToday
+            isSubtaskFocused
               ? "text-amber-500 opacity-100"
               : "opacity-0 group-hover:opacity-100 text-[var(--muted-foreground)] hover:text-amber-500"
           )}
-          title={subtask.isToday ? "Remover do Hoje" : "Focar Hoje"}
+          title={isSubtaskFocused ? "Remover do Hoje" : "Focar Hoje"}
         >
-          <Zap size={16} className={subtask.isToday ? "fill-amber-500" : ""} />
+          <Zap size={16} className={isSubtaskFocused ? "fill-amber-500" : ""} />
         </button>
         <DateSelector
           date={subtask.endDate}
@@ -711,6 +727,14 @@ function SubtaskView({
     setEditedSubtask({ ...editedSubtask, timeSpent: totalSeconds });
   };
 
+  const todayStr = new Date().toLocaleDateString('en-CA');
+  const isSubtaskFocused = (() => {
+    if (editedSubtask.isToday === false) return false;
+    if (editedSubtask.isToday === true) return true;
+    if (!editedSubtask.endDate) return false;
+    return new Date(editedSubtask.endDate).toLocaleDateString('en-CA') <= todayStr;
+  })();
+
   return (
     <div className="flex flex-col h-full">
       <div className="flex items-center justify-between p-6 border-b border-[var(--border)] rounded-t-xl bg-[var(--background)]">
@@ -723,17 +747,17 @@ function SubtaskView({
             <span className="text-sm font-medium">Tarefa: {parentTaskTitle}</span>
           </button>
           <button
-            onClick={() => setEditedSubtask({ ...editedSubtask, isToday: !editedSubtask.isToday })}
+            onClick={() => setEditedSubtask({ ...editedSubtask, isToday: !isSubtaskFocused })}
             className={cn(
               "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all border",
-              editedSubtask.isToday
+              isSubtaskFocused
                 ? "bg-amber-100 text-amber-600 border-amber-300 hover:bg-amber-200"
                 : "bg-[var(--muted)]/50 text-[var(--muted-foreground)] border-[var(--border)] hover:bg-[var(--muted)] hover:text-amber-500"
             )}
-            title={editedSubtask.isToday ? "Remover do Hoje" : "Focar Hoje"}
+            title={isSubtaskFocused ? "Remover do Hoje" : "Focar Hoje"}
           >
-            <Zap size={14} className={editedSubtask.isToday ? "fill-amber-500" : ""} />
-            {editedSubtask.isToday ? "Hoje" : "Focar Hoje"}
+            <Zap size={14} className={isSubtaskFocused ? "fill-amber-500" : ""} />
+            {isSubtaskFocused ? "Hoje" : "Focar Hoje"}
           </button>
         </div>
         <div className="flex items-center gap-4">

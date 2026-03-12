@@ -93,6 +93,7 @@ export function MyTasksView({
     const rawTasks = [
       ...tasks.filter(t => {
         if (t.deletedAt || t.status === 'done' || t.assigneeId !== currentUser.id) return false;
+        if (t.isToday === false) return false;
         if (t.isToday) return true;
         if (!t.endDate) return false;
         const taskDate = new Date(t.endDate).toLocaleDateString('en-CA');
@@ -102,6 +103,7 @@ export function MyTasksView({
         t.subtasks
           .filter(st => {
             if (t.deletedAt || st.completed || st.assigneeId !== currentUser.id) return false;
+            if (st.isToday === false) return false;
             if (st.isToday) return true;
             if (!st.endDate) return false;
             const subtaskDate = new Date(st.endDate).toLocaleDateString('en-CA');
@@ -141,17 +143,25 @@ export function MyTasksView({
   };
 
   const toggleToday = (item: any) => {
+    const currentlyFocused = (() => {
+      if (item.isToday === false) return false;
+      if (item.isToday === true) return true;
+      if (!item.endDate) return false;
+      return new Date(item.endDate).toLocaleDateString('en-CA') <= today;
+    })();
+    const newIsToday = !currentlyFocused;
+
     if (item.parentTask) {
       // Subtask
       const parent = tasks.find(t => t.id === item.parentTask.id);
       if (parent) {
         const updatedSubtasks = parent.subtasks.map(st =>
-          st.id === item.id ? { ...st, isToday: !st.isToday } : st
+          st.id === item.id ? { ...st, isToday: newIsToday } : st
         );
         onUpdateTask({ ...parent, subtasks: updatedSubtasks });
       }
     } else {
-      onUpdateTask({ ...item, isToday: !item.isToday });
+      onUpdateTask({ ...item, isToday: newIsToday });
     }
   };
 
@@ -170,7 +180,7 @@ export function MyTasksView({
       subtasks: [],
       timeSpent: 0,
       createdAt: new Date().toISOString(),
-      isToday: false,
+      isToday: undefined,
     };
 
     await onSaveNewTask(tempTask);
@@ -579,6 +589,14 @@ function MyTaskListItem({ task, project, onClick, onUpdateTask, onDeleteTask, on
 }) {
   const status = subtaskOnly ? (subtaskOnly.completed ? 'done' : task.status) : task.status;
   const title = subtaskOnly ? subtaskOnly.title : task.title;
+  const todayStr = new Date().toLocaleDateString('en-CA');
+  const isFocused = (() => {
+    const it = subtaskOnly ? subtaskOnly : task;
+    if (it.isToday === false) return false;
+    if (it.isToday === true) return true;
+    if (!it.endDate) return false;
+    return new Date(it.endDate).toLocaleDateString('en-CA') <= todayStr;
+  })();
 
   return (
     <div className="group/task-container bg-[#FFFFFF] border border-[var(--border)] rounded-xl hover:shadow-sm transition-all relative">
@@ -670,13 +688,13 @@ function MyTaskListItem({ task, project, onClick, onUpdateTask, onDeleteTask, on
                 onClick={(e) => { e.stopPropagation(); onMarkToday(); }}
                 className={cn(
                   "p-2 rounded-xl transition-all",
-                  (subtaskOnly ? subtaskOnly.isToday : task.isToday)
+                  isFocused
                     ? "bg-amber-100 text-amber-500"
                     : "bg-amber-50/50 text-amber-400 hover:bg-amber-100 hover:text-amber-500 shadow-sm"
                 )}
                 title="Focar hoje"
               >
-                <Zap size={18} fill={(subtaskOnly ? subtaskOnly.isToday : task.isToday) ? "currentColor" : "none"} />
+                <Zap size={18} fill={isFocused ? "currentColor" : "none"} />
               </button>
 
               {!subtaskOnly && (
@@ -703,7 +721,15 @@ function MyTaskListItem({ task, project, onClick, onUpdateTask, onDeleteTask, on
             transition={{ duration: 0.2, ease: "easeOut" }}
             className="overflow-hidden bg-[var(--muted)]/20 p-3 pl-12 space-y-2 border-t border-[var(--border)] rounded-b-xl"
           >
-            {task.subtasks.map(st => (
+            {task.subtasks.map(st => {
+              const stFocused = (() => {
+                if (st.isToday === false) return false;
+                if (st.isToday === true) return true;
+                if (!st.endDate) return false;
+                return new Date(st.endDate).toLocaleDateString('en-CA') <= todayStr;
+              })();
+
+              return (
               <div
                 key={st.id}
                 className="flex items-center gap-4 p-2 hover:bg-[var(--muted)]/50 rounded-lg group/subtask cursor-pointer transition-colors"
@@ -739,20 +765,20 @@ function MyTaskListItem({ task, project, onClick, onUpdateTask, onDeleteTask, on
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      const updatedSubtasks = task.subtasks.map(s => s.id === st.id ? { ...s, isToday: !s.isToday } : s);
+                      const updatedSubtasks = task.subtasks.map(s => s.id === st.id ? { ...s, isToday: !stFocused } : s);
                       onUpdateTask({ ...task, subtasks: updatedSubtasks });
                     }}
                     className={cn(
                       "p-1.5 rounded-lg transition-all",
-                      st.isToday ? "bg-amber-100 text-amber-500" : "opacity-0 group-hover/subtask:opacity-100 text-amber-400 hover:bg-amber-100 hover:text-amber-500"
+                      stFocused ? "bg-amber-100 text-amber-500" : "opacity-0 group-hover/subtask:opacity-100 text-amber-400 hover:bg-amber-100 hover:text-amber-500"
                     )}
                     title="Focar hoje"
                   >
-                    <Zap size={14} fill={st.isToday ? "currentColor" : "none"} />
+                    <Zap size={14} fill={stFocused ? "currentColor" : "none"} />
                   </button>
                 )}
               </div>
-            ))}
+            )})}
           </motion.div>
         )}
       </AnimatePresence>

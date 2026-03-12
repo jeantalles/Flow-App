@@ -292,7 +292,7 @@ export default function App() {
       status: 'todo',
       priority: 'none',
       assigneeId: currentUser?.id, // Default to current user
-      isToday: isToday || false,
+      isToday: isToday,
       subtasks: [],
       timeSpent: 0,
       createdAt: new Date().toISOString()

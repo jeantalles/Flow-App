@@ -121,7 +121,7 @@ export function ProjectView({
       subtasks: [],
       timeSpent: 0,
       createdAt: new Date().toISOString(),
-      isToday: false,
+      isToday: undefined,
     };
 
     await onSaveNewTask(tempTask);
