@@ -87,19 +87,26 @@ export function MyTasksView({
   }, [groupByProject]);
 
   // Today's tasks calculation
-  const today = new Date().toISOString().split('T')[0];
+  const today = new Date().toLocaleDateString('en-CA');
 
   useEffect(() => {
     const rawTasks = [
-      ...tasks.filter(t =>
-        !t.deletedAt &&
-        t.status !== 'done' &&
-        t.assigneeId === currentUser.id &&
-        (t.isToday || (t.endDate && (t.endDate.startsWith(today) || t.endDate <= today)))
-      ).map(t => ({ ...t, type: 'task' as const })),
+      ...tasks.filter(t => {
+        if (t.deletedAt || t.status === 'done' || t.assigneeId !== currentUser.id) return false;
+        if (t.isToday) return true;
+        if (!t.endDate) return false;
+        const taskDate = new Date(t.endDate).toLocaleDateString('en-CA');
+        return taskDate <= today;
+      }).map(t => ({ ...t, type: 'task' as const })),
       ...tasks.flatMap(t =>
         t.subtasks
-          .filter(st => !t.deletedAt && st.assigneeId === currentUser.id && st.isToday && !st.completed)
+          .filter(st => {
+            if (t.deletedAt || st.completed || st.assigneeId !== currentUser.id) return false;
+            if (st.isToday) return true;
+            if (!st.endDate) return false;
+            const subtaskDate = new Date(st.endDate).toLocaleDateString('en-CA');
+            return subtaskDate <= today;
+          })
           .map(st => ({ ...st, parentTask: t, type: 'subtask' as const }))
       )
     ].sort((a, b) => (a.todayOrder ?? 1000) - (b.todayOrder ?? 1000));
