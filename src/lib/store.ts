@@ -22,6 +22,7 @@ export interface Subtask {
   description?: string;
   timeSpent: number; // seconds
   isToday?: boolean;
+  unfocusedDate?: string;
   todayOrder?: number;
   orderIndex?: number;
 }
@@ -40,6 +41,7 @@ export interface Task {
   timeSpent: number; // in seconds
   parentId?: string;
   isToday?: boolean;
+  unfocusedDate?: string;
   createdAt: string;
   deletedAt?: string; // For soft delete
   todayOrder?: number;

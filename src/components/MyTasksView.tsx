@@ -93,21 +93,27 @@ export function MyTasksView({
     const rawTasks = [
       ...tasks.filter(t => {
         if (t.deletedAt || t.status === 'done' || t.assigneeId !== currentUser.id) return false;
-        if (t.isToday === false) return false;
         if (t.isToday) return true;
-        if (!t.endDate) return false;
-        const taskDate = new Date(t.endDate).toLocaleDateString('en-CA');
-        return taskDate <= today;
+        if (t.endDate) {
+          const taskDate = new Date(t.endDate).toLocaleDateString('en-CA');
+          if (taskDate <= today) {
+            return t.unfocusedDate !== today;
+          }
+        }
+        return false;
       }).map(t => ({ ...t, type: 'task' as const })),
       ...tasks.flatMap(t =>
         t.subtasks
           .filter(st => {
             if (t.deletedAt || st.completed || st.assigneeId !== currentUser.id) return false;
-            if (st.isToday === false) return false;
             if (st.isToday) return true;
-            if (!st.endDate) return false;
-            const subtaskDate = new Date(st.endDate).toLocaleDateString('en-CA');
-            return subtaskDate <= today;
+            if (st.endDate) {
+              const subtaskDate = new Date(st.endDate).toLocaleDateString('en-CA');
+              if (subtaskDate <= today) {
+                return st.unfocusedDate !== today;
+              }
+            }
+            return false;
           })
           .map(st => ({ ...st, parentTask: t, type: 'subtask' as const }))
       )
@@ -144,24 +150,29 @@ export function MyTasksView({
 
   const toggleToday = (item: any) => {
     const currentlyFocused = (() => {
-      if (item.isToday === false) return false;
-      if (item.isToday === true) return true;
-      if (!item.endDate) return false;
-      return new Date(item.endDate).toLocaleDateString('en-CA') <= today;
+      if (item.isToday) return true;
+      if (item.endDate) {
+        const dateStr = new Date(item.endDate).toLocaleDateString('en-CA');
+        if (dateStr <= today) {
+          return item.unfocusedDate !== today;
+        }
+      }
+      return false;
     })();
     const newIsToday = !currentlyFocused;
+    const newUnfocusedDate = newIsToday ? undefined : today;
 
     if (item.parentTask) {
       // Subtask
       const parent = tasks.find(t => t.id === item.parentTask.id);
       if (parent) {
         const updatedSubtasks = parent.subtasks.map(st =>
-          st.id === item.id ? { ...st, isToday: newIsToday } : st
+          st.id === item.id ? { ...st, isToday: newIsToday, unfocusedDate: newUnfocusedDate } : st
         );
         onUpdateTask({ ...parent, subtasks: updatedSubtasks });
       }
     } else {
-      onUpdateTask({ ...item, isToday: newIsToday });
+      onUpdateTask({ ...item, isToday: newIsToday, unfocusedDate: newUnfocusedDate });
     }
   };
 
@@ -592,10 +603,14 @@ function MyTaskListItem({ task, project, onClick, onUpdateTask, onDeleteTask, on
   const todayStr = new Date().toLocaleDateString('en-CA');
   const isFocused = (() => {
     const it = subtaskOnly ? subtaskOnly : task;
-    if (it.isToday === false) return false;
-    if (it.isToday === true) return true;
-    if (!it.endDate) return false;
-    return new Date(it.endDate).toLocaleDateString('en-CA') <= todayStr;
+    if (it.isToday) return true;
+    if (it.endDate) {
+      const dateStr = new Date(it.endDate).toLocaleDateString('en-CA');
+      if (dateStr <= todayStr) {
+        return it.unfocusedDate !== todayStr;
+      }
+    }
+    return false;
   })();
 
   return (
@@ -723,10 +738,14 @@ function MyTaskListItem({ task, project, onClick, onUpdateTask, onDeleteTask, on
           >
             {task.subtasks.map(st => {
               const stFocused = (() => {
-                if (st.isToday === false) return false;
-                if (st.isToday === true) return true;
-                if (!st.endDate) return false;
-                return new Date(st.endDate).toLocaleDateString('en-CA') <= todayStr;
+                if (st.isToday) return true;
+                if (st.endDate) {
+                  const dateStr = new Date(st.endDate).toLocaleDateString('en-CA');
+                  if (dateStr <= todayStr) {
+                    return st.unfocusedDate !== todayStr;
+                  }
+                }
+                return false;
               })();
 
               return (
@@ -765,7 +784,7 @@ function MyTaskListItem({ task, project, onClick, onUpdateTask, onDeleteTask, on
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      const updatedSubtasks = task.subtasks.map(s => s.id === st.id ? { ...s, isToday: !stFocused } : s);
+                      const updatedSubtasks = task.subtasks.map(s => s.id === st.id ? { ...s, isToday: !stFocused, unfocusedDate: !stFocused ? undefined : todayStr } : s);
                       onUpdateTask({ ...task, subtasks: updatedSubtasks });
                     }}
                     className={cn(

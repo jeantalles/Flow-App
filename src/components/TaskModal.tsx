@@ -242,10 +242,14 @@ export function TaskModal({
 
   const todayStr = new Date().toLocaleDateString('en-CA');
   const isTaskFocused = (() => {
-    if (editedTask.isToday === false) return false;
-    if (editedTask.isToday === true) return true;
-    if (!editedTask.endDate) return false;
-    return new Date(editedTask.endDate).toLocaleDateString('en-CA') <= todayStr;
+    if (editedTask.isToday) return true;
+    if (editedTask.endDate) {
+      const dateStr = new Date(editedTask.endDate).toLocaleDateString('en-CA');
+      if (dateStr <= todayStr) {
+        return editedTask.unfocusedDate !== todayStr;
+      }
+    }
+    return false;
   })();
 
   return (
@@ -282,7 +286,7 @@ export function TaskModal({
                   showLabel
                 />
                 <button
-                  onClick={() => setEditedTask({ ...editedTask, isToday: !isTaskFocused })}
+                  onClick={() => setEditedTask({ ...editedTask, isToday: !isTaskFocused, unfocusedDate: !isTaskFocused ? undefined : todayStr })}
                   className={cn(
                     "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all border",
                     isTaskFocused
@@ -543,10 +547,14 @@ const SubtaskItem: React.FC<SubtaskItemProps> = ({
 
   const todayStr = new Date().toLocaleDateString('en-CA');
   const isSubtaskFocused = (() => {
-    if (subtask.isToday === false) return false;
-    if (subtask.isToday === true) return true;
-    if (!subtask.endDate) return false;
-    return new Date(subtask.endDate).toLocaleDateString('en-CA') <= todayStr;
+    if (subtask.isToday) return true;
+    if (subtask.endDate) {
+      const dateStr = new Date(subtask.endDate).toLocaleDateString('en-CA');
+      if (dateStr <= todayStr) {
+        return subtask.unfocusedDate !== todayStr;
+      }
+    }
+    return false;
   })();
 
   return (
@@ -604,7 +612,7 @@ const SubtaskItem: React.FC<SubtaskItemProps> = ({
       </div>
       <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
         <button
-          onClick={(e) => { e.stopPropagation(); onUpdate({ isToday: !isSubtaskFocused }); }}
+          onClick={(e) => { e.stopPropagation(); onUpdate({ isToday: !isSubtaskFocused, unfocusedDate: !isSubtaskFocused ? undefined : todayStr }); }}
           className={cn(
             "p-1 rounded transition-all",
             isSubtaskFocused
@@ -729,10 +737,14 @@ function SubtaskView({
 
   const todayStr = new Date().toLocaleDateString('en-CA');
   const isSubtaskFocused = (() => {
-    if (editedSubtask.isToday === false) return false;
-    if (editedSubtask.isToday === true) return true;
-    if (!editedSubtask.endDate) return false;
-    return new Date(editedSubtask.endDate).toLocaleDateString('en-CA') <= todayStr;
+    if (editedSubtask.isToday) return true;
+    if (editedSubtask.endDate) {
+      const dateStr = new Date(editedSubtask.endDate).toLocaleDateString('en-CA');
+      if (dateStr <= todayStr) {
+        return editedSubtask.unfocusedDate !== todayStr;
+      }
+    }
+    return false;
   })();
 
   return (
@@ -747,7 +759,7 @@ function SubtaskView({
             <span className="text-sm font-medium">Tarefa: {parentTaskTitle}</span>
           </button>
           <button
-            onClick={() => setEditedSubtask({ ...editedSubtask, isToday: !isSubtaskFocused })}
+            onClick={() => setEditedSubtask({ ...editedSubtask, isToday: !isSubtaskFocused, unfocusedDate: !isSubtaskFocused ? undefined : todayStr })}
             className={cn(
               "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all border",
               isSubtaskFocused

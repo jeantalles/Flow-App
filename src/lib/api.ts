@@ -37,6 +37,7 @@ const mapSubtask = (dbSubtask: DbSubtask): Subtask => ({
     description: dbSubtask.description || undefined,
     timeSpent: dbSubtask.time_spent,
     isToday: dbSubtask.is_today ?? undefined,
+    unfocusedDate: dbSubtask.unfocused_date ?? undefined,
     todayOrder: dbSubtask.today_order ?? undefined,
     orderIndex: dbSubtask.order_index ?? undefined,
 });
@@ -114,6 +115,7 @@ export const api = {
                 timeSpent: dbTask.time_spent,
                 parentId: dbTask.parent_id || undefined,
                 isToday: dbTask.is_today ?? undefined,
+                unfocusedDate: dbTask.unfocused_date ?? undefined,
                 todayOrder: dbTask.today_order ?? undefined,
                 createdAt: dbTask.created_at,
                 deletedAt: dbTask.deleted_at || undefined,
@@ -133,6 +135,7 @@ export const api = {
                 assignee_id: task.assigneeId,
                 parent_id: task.parentId,
                 is_today: task.isToday,
+                unfocused_date: task.unfocusedDate,
                 today_order: task.todayOrder
             }).select(`*, subtasks (*)`).single();
 
@@ -150,6 +153,7 @@ export const api = {
                 timeSpent: data.time_spent,
                 parentId: data.parent_id || undefined,
                 isToday: data.is_today ?? undefined,
+                unfocusedDate: data.unfocused_date ?? undefined,
                 todayOrder: data.today_order ?? undefined,
                 createdAt: data.created_at,
                 deletedAt: data.deleted_at || undefined,
@@ -168,6 +172,7 @@ export const api = {
             if (updates.assigneeId !== undefined) dbUpdates.assignee_id = updates.assigneeId;
             if (updates.projectId !== undefined) dbUpdates.project_id = updates.projectId;
             if (updates.isToday !== undefined) dbUpdates.is_today = updates.isToday;
+            if (updates.unfocusedDate !== undefined) dbUpdates.unfocused_date = updates.unfocusedDate;
             if (updates.todayOrder !== undefined) dbUpdates.today_order = updates.todayOrder;
             if (updates.deletedAt !== undefined) dbUpdates.deleted_at = updates.deletedAt;
             if (updates.timeSpent !== undefined) dbUpdates.time_spent = updates.timeSpent;
@@ -188,6 +193,7 @@ export const api = {
                 assignee_id: subtask.assigneeId,
                 description: subtask.description,
                 is_today: subtask.isToday,
+                unfocused_date: subtask.unfocusedDate,
                 today_order: subtask.todayOrder,
                 order_index: subtask.orderIndex
             }).select().single();
@@ -203,6 +209,7 @@ export const api = {
             if (updates.assigneeId !== undefined) dbUpdates.assignee_id = updates.assigneeId;
             if (updates.description !== undefined) dbUpdates.description = updates.description;
             if (updates.isToday !== undefined) dbUpdates.is_today = updates.isToday;
+            if (updates.unfocusedDate !== undefined) dbUpdates.unfocused_date = updates.unfocusedDate;
             if (updates.todayOrder !== undefined) dbUpdates.today_order = updates.todayOrder;
             if (updates.orderIndex !== undefined) dbUpdates.order_index = updates.orderIndex;
             if (updates.timeSpent !== undefined) dbUpdates.time_spent = updates.timeSpent;

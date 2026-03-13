@@ -56,6 +56,7 @@ export type Database = {
           end_date: string | null
           id: string
           is_today: boolean | null
+          unfocused_date: string | null
           start_date: string | null
           task_id: string | null
           time_spent: number
@@ -71,6 +72,7 @@ export type Database = {
           end_date?: string | null
           id?: string
           is_today?: boolean | null
+          unfocused_date?: string | null
           start_date?: string | null
           task_id?: string | null
           time_spent?: number
@@ -86,6 +88,7 @@ export type Database = {
           end_date?: string | null
           id?: string
           is_today?: boolean | null
+          unfocused_date?: string | null
           start_date?: string | null
           task_id?: string | null
           time_spent?: number
@@ -118,6 +121,7 @@ export type Database = {
           end_date: string | null
           id: string
           is_today: boolean | null
+          unfocused_date: string | null
           parent_id: string | null
           priority: string
           project_id: string | null
@@ -135,6 +139,7 @@ export type Database = {
           end_date?: string | null
           id?: string
           is_today?: boolean | null
+          unfocused_date?: string | null
           parent_id?: string | null
           priority: string
           project_id?: string | null
@@ -152,6 +157,7 @@ export type Database = {
           end_date?: string | null
           id?: string
           is_today?: boolean | null
+          unfocused_date?: string | null
           parent_id?: string | null
           priority?: string
           project_id?: string | null
