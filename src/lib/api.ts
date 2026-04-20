@@ -238,37 +238,51 @@ export const api = {
         }
     },
     weeklyNotes: {
-        async fetchByWeek(weekStartDate: string, userId: string) {
+        // Busca a nota compartilhada da semana (sem filtro por usuário)
+        async fetchSharedByWeek(weekStartDate: string) {
             const { data, error } = await supabase.from('weekly_notes')
                 .select('*')
                 .eq('week_start_date', weekStartDate)
-                .eq('user_id', userId)
+                .order('created_at', { ascending: true })
+                .limit(1)
                 .maybeSingle();
             if (error) throw error;
             return data;
         },
-        async upsert(weekStartDate: string, userId: string, content: any) {
-            const { data, error } = await supabase.from('weekly_notes').upsert({
-                week_start_date: weekStartDate,
-                user_id: userId,
-                content,
-                updated_at: new Date().toISOString()
-            }, { onConflict: 'week_start_date,user_id' }).select().single();
-            if (error) throw error;
-            return data;
-        },
-        async deleteByWeek(weekStartDate: string, userId: string) {
-            const { error } = await supabase.from('weekly_notes')
-                .delete()
+        // Upsert compartilhado: atualiza a linha existente da semana, ou cria uma nova
+        async upsertShared(weekStartDate: string, userId: string, content: any) {
+            const { data: existing } = await supabase.from('weekly_notes')
+                .select('id')
                 .eq('week_start_date', weekStartDate)
-                .eq('user_id', userId);
-            if (error) throw error;
+                .limit(1)
+                .maybeSingle();
+            if (existing) {
+                const { data, error } = await supabase.from('weekly_notes')
+                    .update({ content, updated_at: new Date().toISOString() })
+                    .eq('id', existing.id)
+                    .select()
+                    .single();
+                if (error) throw error;
+                return data;
+            } else {
+                const { data, error } = await supabase.from('weekly_notes')
+                    .insert({ week_start_date: weekStartDate, user_id: userId, content })
+                    .select()
+                    .single();
+                if (error) throw error;
+                return data;
+            }
         },
-        async deleteOlderThan(weekStartDate: string, userId: string) {
+        async deleteByWeek(weekStartDate: string) {
             const { error } = await supabase.from('weekly_notes')
                 .delete()
-                .lt('week_start_date', weekStartDate)
-                .eq('user_id', userId);
+                .eq('week_start_date', weekStartDate);
+            if (error) throw error;
+        },
+        async deleteOlderThan(weekStartDate: string) {
+            const { error } = await supabase.from('weekly_notes')
+                .delete()
+                .lt('week_start_date', weekStartDate);
             if (error) throw error;
         }
     }

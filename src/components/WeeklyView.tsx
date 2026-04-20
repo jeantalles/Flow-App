@@ -1,10 +1,11 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import { Extension } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
 import TaskList from '@tiptap/extension-task-list';
 import TaskItem from '@tiptap/extension-task-item';
 import Placeholder from '@tiptap/extension-placeholder';
+import { supabase } from '@/lib/supabase';
 
 const TaskItemEnter = Extension.create({
     name: 'taskItemEnter',
@@ -51,7 +52,7 @@ const TaskItemEnter = Extension.create({
 });
 import { format, startOfWeek, addWeeks, subWeeks, addDays, getWeekOfMonth, isSameWeek, subMonths } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Loader2, Save, LayoutList, ArrowLeft } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Loader2, LayoutList, ArrowLeft } from 'lucide-react';
 import { Button } from './ui-elements';
 import { api } from '@/lib/api';
 import { User } from '@/lib/store';
@@ -141,7 +142,9 @@ export function WeeklyView({ currentUser }: WeeklyViewProps) {
     const [currentDate, setCurrentDate] = useState(new Date());
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
-    const [lastSaved, setLastSaved] = useState<Date | null>(null);
+
+    const lastSavedContentRef = useRef<any>(null);
+    const isLoadingRef = useRef(true);
 
     const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
     const weekStartStr = format(weekStart, 'yyyy-MM-dd');
@@ -164,35 +167,40 @@ export function WeeklyView({ currentUser }: WeeklyViewProps) {
         },
     });
 
-    // Delete old notes (before this week) once on mount
+    // Limpa notas antigas ao montar
     useEffect(() => {
-        api.weeklyNotes.deleteOlderThan(weekStartStr, currentUser.id).catch(console.error);
+        api.weeklyNotes.deleteOlderThan(weekStartStr).catch(console.error);
     }, []);
 
     const loadNote = useCallback(async () => {
         if (!editor) return;
+        isLoadingRef.current = true;
         setIsLoading(true);
         try {
-            const note = await api.weeklyNotes.fetchByWeek(weekStartStr, currentUser.id);
+            const note = await api.weeklyNotes.fetchSharedByWeek(weekStartStr);
             if (note && note.content) {
                 const firstNode = note.content?.content?.[0];
                 const hasTemplate = firstNode?.type === 'heading';
                 if (hasTemplate) {
                     editor.commands.setContent(note.content);
+                    lastSavedContentRef.current = note.content;
                 } else {
-                    await api.weeklyNotes.deleteByWeek(weekStartStr, currentUser.id);
+                    await api.weeklyNotes.deleteByWeek(weekStartStr);
                     editor.commands.setContent(WEEKLY_TEMPLATE);
+                    lastSavedContentRef.current = WEEKLY_TEMPLATE;
                 }
             } else {
                 editor.commands.setContent(WEEKLY_TEMPLATE);
+                lastSavedContentRef.current = WEEKLY_TEMPLATE;
             }
         } catch (error) {
             console.error('Error loading weekly note:', error);
             editor.commands.setContent(WEEKLY_TEMPLATE);
         } finally {
             setIsLoading(false);
+            isLoadingRef.current = false;
         }
-    }, [weekStartStr, currentUser.id, editor]);
+    }, [weekStartStr, editor]);
 
     useEffect(() => {
         if (editor) {
@@ -200,6 +208,7 @@ export function WeeklyView({ currentUser }: WeeklyViewProps) {
         }
     }, [loadNote, editor]);
 
+    // Auto-save com debounce
     useEffect(() => {
         if (!editor) return;
 
@@ -215,13 +224,40 @@ export function WeeklyView({ currentUser }: WeeklyViewProps) {
         };
     }, [editor, editor?.getHTML()]);
 
+    // Realtime: recebe alterações de outros usuários
+    useEffect(() => {
+        if (!editor) return;
+
+        const channel = supabase
+            .channel(`weekly-notes-${weekStartStr}`)
+            .on('postgres_changes' as any, {
+                event: '*',
+                schema: 'public',
+                table: 'weekly_notes',
+                filter: `week_start_date=eq.${weekStartStr}`,
+            }, (payload: any) => {
+                const incoming = payload.new?.content;
+                if (!incoming) return;
+                if (isLoadingRef.current) return;
+                // Ignora se for o nosso próprio save
+                if (JSON.stringify(incoming) === JSON.stringify(lastSavedContentRef.current)) return;
+                editor.commands.setContent(incoming);
+                lastSavedContentRef.current = incoming;
+            })
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, [weekStartStr, editor]);
+
     const handleSave = async () => {
-        if (!editor || isSaving || isLoading) return;
+        if (!editor || isSaving || isLoadingRef.current) return;
         setIsSaving(true);
         try {
             const content = editor.getJSON();
-            await api.weeklyNotes.upsert(weekStartStr, currentUser.id, content);
-            setLastSaved(new Date());
+            await api.weeklyNotes.upsertShared(weekStartStr, currentUser.id, content);
+            lastSavedContentRef.current = content;
         } catch (error) {
             console.error('Error saving weekly note:', error);
         } finally {
@@ -440,28 +476,14 @@ export function WeeklyView({ currentUser }: WeeklyViewProps) {
                         </Button>
                     </div>
 
-                    <div className="h-8 w-[1px] bg-[var(--border)]" />
-
-                    <div className="flex items-center gap-4">
-                        {lastSaved && (
-                            <span className="text-[10px] uppercase font-bold text-[var(--muted-foreground)] tracking-widest bg-[var(--accent)] px-2 py-1 rounded-md">
-                                Salvo {format(lastSaved, 'HH:mm')}
-                            </span>
-                        )}
-                        <Button
-                            onClick={handleSave}
-                            disabled={isSaving || isLoading}
-                            className="gap-2 bg-[#165DFC] hover:bg-[#165DFC]/90 text-white shadow-lg shadow-[#165DFC]/20 px-6 h-10 rounded-xl font-semibold transition-all hover:scale-[1.02] active:scale-[0.98]"
-                        >
-                            {isSaving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
-                            Salvar
-                        </Button>
-                    </div>
+                    {isSaving && (
+                        <Loader2 size={16} className="animate-spin text-[var(--muted-foreground)]" />
+                    )}
                 </div>
             </div>
 
             <div className="flex-1 overflow-y-auto py-10 custom-scrollbar">
-                <div className="w-full max-w-2xl px-[160px] py-2 min-h-[700px]">
+                <div className="w-full max-w-3xl pl-[80px] pr-12 py-2 min-h-[700px]">
                     {isLoading ? (
                         <div className="flex flex-col items-center justify-center h-full py-20 gap-6 text-[var(--muted-foreground)]">
                             <div className="relative">
