@@ -256,6 +256,20 @@ export const api = {
             }, { onConflict: 'week_start_date,user_id' }).select().single();
             if (error) throw error;
             return data;
+        },
+        async deleteByWeek(weekStartDate: string, userId: string) {
+            const { error } = await supabase.from('weekly_notes')
+                .delete()
+                .eq('week_start_date', weekStartDate)
+                .eq('user_id', userId);
+            if (error) throw error;
+        },
+        async deleteOlderThan(weekStartDate: string, userId: string) {
+            const { error } = await supabase.from('weekly_notes')
+                .delete()
+                .lt('week_start_date', weekStartDate)
+                .eq('user_id', userId);
+            if (error) throw error;
         }
     }
 };
