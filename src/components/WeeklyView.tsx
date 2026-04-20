@@ -314,28 +314,26 @@ export function WeeklyView({ currentUser }: WeeklyViewProps) {
           position: relative;
         }
         .tiptap-weekly .tiptap ul[data-type="taskList"] li::before {
-          content: '⋮⋮';
-          color: var(--muted-foreground);
-          opacity: 0;
-          font-weight: bold;
-          font-size: 1.1rem;
-          line-height: 1.5rem;
-          cursor: grab;
-          user-select: none;
-          transition: opacity 0.2s;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          margin-left: -2rem; /* Position to the left of the checkbox */
-          width: 1.5rem;
+          content: '';
+          position: absolute;
+          left: -1.75rem;
+          top: 0.25rem;
+          width: 1.25rem;
           height: 1.5rem;
-          margin-top: 0.25rem;
+          background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='9' cy='12' r='1'/%3E%3Ccircle cx='9' cy='5' r='1'/%3E%3Ccircle cx='9' cy='19' r='1'/%3E%3Ccircle cx='15' cy='12' r='1'/%3E%3Ccircle cx='15' cy='5' r='1'/%3E%3Ccircle cx='15' cy='19' r='1'/%3E%3C/svg%3E");
+          background-repeat: no-repeat;
+          background-position: center;
+          background-size: 1rem;
+          opacity: 0;
+          cursor: grab;
+          transition: opacity 0.2s ease-in-out;
+          z-index: 10;
         }
         .tiptap-weekly .tiptap ul[data-type="taskList"] li:hover::before {
-          opacity: 0.4;
+          opacity: 0.5;
         }
-        .tiptap-weekly .tiptap ul[data-type="taskList"] li:hover::before:hover {
-          opacity: 0.8;
+        .tiptap-weekly .tiptap ul[data-type="taskList"] li::before:hover {
+          opacity: 1;
         }
         .tiptap-weekly .tiptap ul[data-type="taskList"] label {
           margin-top: 0.25rem;
