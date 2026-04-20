@@ -145,6 +145,9 @@ export function WeeklyView({ currentUser }: WeeklyViewProps) {
 
     const lastSavedContentRef = useRef<any>(null);
     const isLoadingRef = useRef(true);
+    const isSavingRef = useRef(false);
+    const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const handleSaveRef = useRef<() => Promise<void>>(() => Promise.resolve());
 
     const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
     const weekStartStr = format(weekStart, 'yyyy-MM-dd');
@@ -208,21 +211,25 @@ export function WeeklyView({ currentUser }: WeeklyViewProps) {
         }
     }, [loadNote, editor]);
 
-    // Auto-save com debounce
+    // Mantém handleSaveRef sempre atualizado para evitar closures stale
+    useEffect(() => {
+        handleSaveRef.current = handleSave;
+    });
+
+    // Auto-save com debounce via evento nativo do editor
     useEffect(() => {
         if (!editor) return;
-
-        const timer = setTimeout(() => {
-            handleSave();
-        }, 1000);
-
-        const handleUpdate = () => {};
+        const handleUpdate = () => {
+            if (isLoadingRef.current) return;
+            if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+            saveTimerRef.current = setTimeout(() => handleSaveRef.current(), 1000);
+        };
         editor.on('update', handleUpdate);
         return () => {
-            clearTimeout(timer);
+            if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
             editor.off('update', handleUpdate);
         };
-    }, [editor, editor?.getHTML()]);
+    }, [editor]);
 
     // Realtime: recebe alterações de outros usuários
     useEffect(() => {
@@ -252,7 +259,8 @@ export function WeeklyView({ currentUser }: WeeklyViewProps) {
     }, [weekStartStr, editor]);
 
     const handleSave = async () => {
-        if (!editor || isSaving || isLoadingRef.current) return;
+        if (!editor || isSavingRef.current || isLoadingRef.current) return;
+        isSavingRef.current = true;
         setIsSaving(true);
         try {
             const content = editor.getJSON();
@@ -261,6 +269,7 @@ export function WeeklyView({ currentUser }: WeeklyViewProps) {
         } catch (error) {
             console.error('Error saving weekly note:', error);
         } finally {
+            isSavingRef.current = false;
             setIsSaving(false);
         }
     };
