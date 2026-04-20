@@ -80,11 +80,11 @@ export const api = {
         async update(id: string, updates: Partial<Project>) {
             const dbUpdates: any = {};
             if (updates.name !== undefined) dbUpdates.name = updates.name;
-            if (updates.description !== undefined) dbUpdates.description = updates.description;
+            if ('description' in updates) dbUpdates.description = updates.description ?? null;
             if (updates.color !== undefined) dbUpdates.color = updates.color;
-            if (updates.deadline !== undefined) dbUpdates.deadline = updates.deadline;
-            if (updates.archivedAt !== undefined) dbUpdates.archived_at = updates.archivedAt;
-            if (updates.deletedAt !== undefined) dbUpdates.deleted_at = updates.deletedAt;
+            if ('deadline' in updates) dbUpdates.deadline = updates.deadline ?? null;
+            if ('archivedAt' in updates) dbUpdates.archived_at = updates.archivedAt ?? null;
+            if ('deletedAt' in updates) dbUpdates.deleted_at = updates.deletedAt ?? null;
 
             const { data, error } = await supabase.from('projects').update(dbUpdates).eq('id', id).select().single();
             if (error) throw error;
@@ -164,17 +164,17 @@ export const api = {
         async update(id: string, updates: Partial<Task>) {
             const dbUpdates: any = {};
             if (updates.title !== undefined) dbUpdates.title = updates.title;
-            if (updates.description !== undefined) dbUpdates.description = updates.description;
+            if ('description' in updates) dbUpdates.description = updates.description ?? null;
             if (updates.status !== undefined) dbUpdates.status = updates.status;
             if (updates.priority !== undefined) dbUpdates.priority = updates.priority;
-            if (updates.startDate !== undefined) dbUpdates.start_date = updates.startDate;
-            if (updates.endDate !== undefined) dbUpdates.end_date = updates.endDate;
-            if (updates.assigneeId !== undefined) dbUpdates.assignee_id = updates.assigneeId;
-            if (updates.projectId !== undefined) dbUpdates.project_id = updates.projectId;
+            if ('startDate' in updates) dbUpdates.start_date = updates.startDate ?? null;
+            if ('endDate' in updates) dbUpdates.end_date = updates.endDate ?? null;
+            if ('assigneeId' in updates) dbUpdates.assignee_id = updates.assigneeId ?? null;
+            if ('projectId' in updates) dbUpdates.project_id = updates.projectId ?? null;
             if (updates.isToday !== undefined) dbUpdates.is_today = updates.isToday;
-            if (updates.unfocusedDate !== undefined) dbUpdates.unfocused_date = updates.unfocusedDate;
-            if (updates.todayOrder !== undefined) dbUpdates.today_order = updates.todayOrder;
-            if (updates.deletedAt !== undefined) dbUpdates.deleted_at = updates.deletedAt;
+            if ('unfocusedDate' in updates) dbUpdates.unfocused_date = updates.unfocusedDate ?? null;
+            if ('todayOrder' in updates) dbUpdates.today_order = updates.todayOrder ?? null;
+            if ('deletedAt' in updates) dbUpdates.deleted_at = updates.deletedAt ?? null;
             if (updates.timeSpent !== undefined) dbUpdates.time_spent = updates.timeSpent;
 
             const { error } = await supabase.from('tasks').update(dbUpdates).eq('id', id);
@@ -204,13 +204,13 @@ export const api = {
             const dbUpdates: any = {};
             if (updates.title !== undefined) dbUpdates.title = updates.title;
             if (updates.completed !== undefined) dbUpdates.completed = updates.completed;
-            if (updates.startDate !== undefined) dbUpdates.start_date = updates.startDate;
-            if (updates.endDate !== undefined) dbUpdates.end_date = updates.endDate;
-            if (updates.assigneeId !== undefined) dbUpdates.assignee_id = updates.assigneeId;
-            if (updates.description !== undefined) dbUpdates.description = updates.description;
+            if ('startDate' in updates) dbUpdates.start_date = updates.startDate ?? null;
+            if ('endDate' in updates) dbUpdates.end_date = updates.endDate ?? null;
+            if ('assigneeId' in updates) dbUpdates.assignee_id = updates.assigneeId ?? null;
+            if ('description' in updates) dbUpdates.description = updates.description ?? null;
             if (updates.isToday !== undefined) dbUpdates.is_today = updates.isToday;
-            if (updates.unfocusedDate !== undefined) dbUpdates.unfocused_date = updates.unfocusedDate;
-            if (updates.todayOrder !== undefined) dbUpdates.today_order = updates.todayOrder;
+            if ('unfocusedDate' in updates) dbUpdates.unfocused_date = updates.unfocusedDate ?? null;
+            if ('todayOrder' in updates) dbUpdates.today_order = updates.todayOrder ?? null;
             if (updates.orderIndex !== undefined) dbUpdates.order_index = updates.orderIndex;
             if (updates.timeSpent !== undefined) dbUpdates.time_spent = updates.timeSpent;
 
