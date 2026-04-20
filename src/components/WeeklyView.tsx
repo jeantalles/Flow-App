@@ -7,6 +7,10 @@ import TaskItem from '@tiptap/extension-task-item';
 import Placeholder from '@tiptap/extension-placeholder';
 import { supabase } from '@/lib/supabase';
 
+const CustomTaskItem = TaskItem.extend({
+    draggable: true,
+});
+
 const TaskItemEnter = Extension.create({
     name: 'taskItemEnter',
     priority: 1000,
@@ -158,7 +162,7 @@ export function WeeklyView({ currentUser }: WeeklyViewProps) {
                 heading: { levels: [2] },
             }),
             TaskList,
-            TaskItem.configure({ nested: true }),
+            CustomTaskItem.configure({ nested: true }),
             TaskItemEnter,
             Placeholder.configure({
                 placeholder: 'Escreva suas principais prioridades e demandas da semana...',
@@ -307,6 +311,31 @@ export function WeeklyView({ currentUser }: WeeklyViewProps) {
           align-items: flex-start;
           margin-bottom: 0.35rem;
           gap: 0.5rem;
+          position: relative;
+        }
+        .tiptap-weekly .tiptap ul[data-type="taskList"] li::before {
+          content: '⋮⋮';
+          color: var(--muted-foreground);
+          opacity: 0;
+          font-weight: bold;
+          font-size: 1.1rem;
+          line-height: 1.5rem;
+          cursor: grab;
+          user-select: none;
+          transition: opacity 0.2s;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          margin-left: -2rem; /* Position to the left of the checkbox */
+          width: 1.5rem;
+          height: 1.5rem;
+          margin-top: 0.25rem;
+        }
+        .tiptap-weekly .tiptap ul[data-type="taskList"] li:hover::before {
+          opacity: 0.4;
+        }
+        .tiptap-weekly .tiptap ul[data-type="taskList"] li:hover::before:hover {
+          opacity: 0.8;
         }
         .tiptap-weekly .tiptap ul[data-type="taskList"] label {
           margin-top: 0.25rem;
